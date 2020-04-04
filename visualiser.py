@@ -3,6 +3,8 @@ contains all methods for visualisation tasks
 '''
 
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines #for legend actors
+import matplotlib.patches as patches #for legend actors
 import matplotlib as mpl
 import numpy as np
 
@@ -15,27 +17,90 @@ def set_style(Config):
     '''
     if Config.plot_style.lower() == 'dark':
         mpl.style.use('plot_styles/dark.mplstyle')
+    
+    if Config.plot_text_style == 'LaTeX':
+        mpl.rc('text', usetex = True)
+        mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}',
+                                               r'\usepackage{amssymb}']
+        mpl.rcParams['font.family'] = 'serif'
 
 
-def build_fig(Config, figsize=(5,7)):
+def build_fig(Config, figsize=(10,5)):
     set_style(Config)
-    fig = plt.figure(figsize=(5,7))
-    spec = fig.add_gridspec(ncols=1, nrows=2, height_ratios=[5,2])
+    fig = plt.figure(figsize=(10,5))
+    spec = fig.add_gridspec(ncols=2, nrows=1, width_ratios=[5,5])
 
     ax1 = fig.add_subplot(spec[0,0])
-    plt.title('infection simulation')
+    # plt.title('infection simulation')
     plt.xlim(Config.xbounds[0], Config.xbounds[1])
     plt.ylim(Config.ybounds[0], Config.ybounds[1])
 
-    ax2 = fig.add_subplot(spec[1,0])
-    ax2.set_title('number of infected')
+    ax2 = fig.add_subplot(spec[0,1])
+    # ax2.set_title('number of infected')
     #ax2.set_xlim(0, simulation_steps)
     ax2.set_ylim(0, Config.pop_size + 100)
+
+    ax2.set_xlabel('Simulation Steps', fontsize = 14)
+    ax2.set_ylabel('Number of people', fontsize = 14)
+
+    #get color palettes
+    palette = Config.get_palette()
+
+    # Legend actors
+    # a1 = mlines.Line2D([], [], color=palette[1], marker='', markersize=5, linestyle=':')
+    # a2 = mlines.Line2D([], [], color=palette[1], marker='', markersize=5, linestyle='-')
+    # a3 = mlines.Line2D([], [], color=palette[3], marker='', markersize=5, linestyle='-')
+    # a4 = mlines.Line2D([], [], color=palette[0], marker='', markersize=5, linestyle='-')
+    # a5 = mlines.Line2D([], [], color=palette[2], marker='', markersize=5, linestyle='-')
+    # Legend actors type 2
+    a1 = mlines.Line2D([], [], color=palette[1], marker='', markersize=5, linestyle=':')
+    a2 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[1], fill='None', hatch=None)
+    a3 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[0], fill='None', hatch=None)
+    a4 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[2], fill='None', hatch=None)
+    a5 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[3], fill='None', hatch=None)
+
+    handles, labels = [[a1,a2,a3,a4,a5], ['healthcare capacity','infectious','susceptible','recovered','fatalities']]
+    fig.legend(handles, labels, loc='upper center', ncol=5, fontsize = 10)
 
     #if 
 
     return fig, spec, ax1, ax2
 
+def build_fig_SIRonly(Config, figsize=(5,4)):
+    set_style(Config)
+    fig = plt.figure(figsize=(5,4))
+    spec = fig.add_gridspec(ncols=1, nrows=1)
+
+    ax1 = fig.add_subplot(spec[0,0])
+    ax1.set_title('number of infected')
+    #ax2.set_xlim(0, simulation_steps)
+    ax1.set_ylim(0, Config.pop_size + 100)
+
+    ax1.set_xlabel('Simulation Steps')
+    ax1.set_ylabel('Number of people')
+
+    #get color palettes
+    palette = Config.get_palette()
+
+    # Legend actors
+    a1 = mlines.Line2D([], [], color=palette[1], marker='', markersize=5, linestyle=':')
+    a2 = mlines.Line2D([], [], color=palette[1], marker='', markersize=5, linestyle='-')
+    a3 = mlines.Line2D([], [], color=palette[0], marker='', markersize=5, linestyle='-')
+    a4 = mlines.Line2D([], [], color=palette[2], marker='', markersize=5, linestyle='-')
+    a5 = mlines.Line2D([], [], color=palette[3], marker='', markersize=5, linestyle='-')
+    # Legend actors type 2
+    # a1 = mlines.Line2D([], [], color=palette[1], marker='', markersize=5, linestyle=':')
+    # a2 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[1], fill='None', hatch=None)
+    # a3 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[0], fill='None', hatch=None)
+    # a4 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[2], fill='None', hatch=None)
+    # a5 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[3], fill='None', hatch=None)
+
+    # handles, labels = [[a1,a2,a3,a4,a5], ['healthcare capacity','infectious','susceptible','recovered','fatalities']]
+    # fig.legend(handles, labels, loc='upper center', ncol=5, fontsize = 10)
+
+    #if 
+
+    return fig, spec, ax1
 
 def draw_tstep(Config, population, pop_tracker, frame,
                fig, spec, ax1, ax2):
@@ -47,9 +112,14 @@ def draw_tstep(Config, population, pop_tracker, frame,
     #get color palettes
     palette = Config.get_palette()
 
-    spec = fig.add_gridspec(ncols=1, nrows=2, height_ratios=[5,2])
-    ax1.clear()
-    ax2.clear()
+    # ax1.clear()
+    # ax2.clear()
+
+    # option 2, remove all lines and collections
+    for artist in ax1.lines + ax1.collections + ax1.texts:
+        artist.remove()
+    for artist in ax2.lines + ax2.collections:
+        artist.remove()
 
     ax1.set_xlim(Config.x_plot[0], Config.x_plot[1])
     ax1.set_ylim(Config.y_plot[0], Config.y_plot[1])
@@ -83,40 +153,94 @@ def draw_tstep(Config, population, pop_tracker, frame,
                                                                                              len(immune), 
                                                                                              len(fatalities)),
                 fontsize=6)
-    
-    ax2.set_title('number of infected')
-    ax2.text(0, Config.pop_size * 0.05, 
-                'https://github.com/paulvangentcom/python-corona-simulation',
-                fontsize=6, alpha=0.5)
-    #ax2.set_xlim(0, simulation_steps)
-    ax2.set_ylim(0, Config.pop_size + 200)
 
     if Config.treatment_dependent_risk:
         infected_arr = np.asarray(pop_tracker.infectious)
         indices = np.argwhere(infected_arr >= Config.healthcare_capacity)
 
-        ax2.plot([Config.healthcare_capacity for x in range(len(pop_tracker.infectious))], 
+        a1 = ax2.plot([Config.healthcare_capacity for x in range(len(pop_tracker.infectious))], 
                  'r:', label='healthcare capacity')
 
     if Config.plot_mode.lower() == 'default':
         ax2.plot(pop_tracker.infectious, color=palette[1])
         ax2.plot(pop_tracker.fatalities, color=palette[3], label='fatalities')
     elif Config.plot_mode.lower() == 'sir':
-        ax2.plot(pop_tracker.infectious, color=palette[1], label='infectious')
-        ax2.plot(pop_tracker.fatalities, color=palette[3], label='fatalities')
-        ax2.plot(pop_tracker.susceptible, color=palette[0], label='susceptible')
-        ax2.plot(pop_tracker.recovered, color=palette[2], label='recovered')
+        
+        I = pop_tracker.infectious
+        S = np.add(I, pop_tracker.susceptible)
+        Rr = np.add(S, pop_tracker.recovered) 
+        Rf = np.add(Rr, pop_tracker.fatalities) 
+
+        # ax2.plot(I, color=palette[1], label='infectious')
+        # ax2.plot(S, color=palette[0], label='susceptible')
+        # ax2.plot(Rr, color=palette[2], label='recovered')
+        # ax2.plot(Rf, color=palette[3], label='fatalities')
+
+        # Filled plot
+        ax2.fill_between(np.arange(frame+1), [0.0]*(frame+1), I, color=palette[1]) #infectious
+        ax2.fill_between(np.arange(frame+1), I, S, color=palette[0]) #healthy
+        ax2.fill_between(np.arange(frame+1), S, Rr, color=palette[2]) #recovered
+        ax2.fill_between(np.arange(frame+1), Rr, Rf, color=palette[3]) #dead
+
     else:
         raise ValueError('incorrect plot_style specified, use \'sir\' or \'default\'')
 
-    ax2.legend(loc = 'best', fontsize = 6)
+    plt.draw()
+    plt.pause(0.0001)
+
+    if Config.save_plot:
+        try:
+            fig.savefig('%s/%i.png' %(Config.plot_path, frame), dpi=300)
+        except:
+            check_folder(Config.plot_path)
+            fig.savefig('%s/%i.png' %(Config.plot_path, frame), dpi=300)
+
+def draw_SIRonly(Config, population, pop_tracker, frame,
+               fig, spec, ax1):
+
+   #construct plot and visualise
+
+    #set plot style
+    set_style(Config)
+
+    #get color palettes
+    palette = Config.get_palette()
+
+    ax1.clear()
+
+    ax1.set_title('number of infected')
+    # ax1.text(0, Config.pop_size * 0.05, 
+    #             'https://github.com/paulvangentcom/python-corona-simulation',
+    #             fontsize=6, alpha=0.5)
+    #ax2.set_xlim(0, simulation_steps)
+    ax1.set_ylim(0, Config.pop_size + 200)
+
+    if Config.treatment_dependent_risk:
+        infected_arr = np.asarray(pop_tracker.infectious)
+        indices = np.argwhere(infected_arr >= Config.healthcare_capacity)
+
+        ax1.plot([Config.healthcare_capacity for x in range(len(pop_tracker.infectious))], 
+                 'r:', label='healthcare capacity')
+
+    if Config.plot_mode.lower() == 'default':
+        ax1.plot(pop_tracker.infectious, color=palette[1])
+        ax1.plot(pop_tracker.fatalities, color=palette[3], label='fatalities')
+    elif Config.plot_mode.lower() == 'sir':
+        ax1.plot(pop_tracker.infectious, color=palette[1], label='infectious')
+        ax1.plot(pop_tracker.fatalities, color=palette[3], label='fatalities')
+        ax1.plot(pop_tracker.susceptible, color=palette[0], label='susceptible')
+        ax1.plot(pop_tracker.recovered, color=palette[2], label='recovered')
+    else:
+        raise ValueError('incorrect plot_style specified, use \'sir\' or \'default\'')
+
+    ax1.legend(loc = 'best', fontsize = 10)
     
     plt.draw()
     plt.pause(0.0001)
 
     if Config.save_plot:
         try:
-            plt.savefig('%s/%i.png' %(Config.plot_path, frame))
+            fig.savefig('%s/Final_%i.pdf' %(Config.plot_path, frame), dpi=1000)
         except:
             check_folder(Config.plot_path)
-            plt.savefig('%s/%i.png' %(Config.plot_path, frame))
+            fig.savefig('%s/Final_%i.pdf' %(Config.plot_path, frame), dpi=1000)

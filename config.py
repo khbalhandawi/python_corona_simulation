@@ -34,17 +34,20 @@ class Configuration():
         #visualisation variables
         self.visualise = True #whether to visualise the simulation 
         self.plot_mode = 'sir' #default or sir
+        self.plot_last_tstep = True #plot last frame SIR
         #size of the simulated world in coordinates
         self.x_plot = [0, 1] 
         self.y_plot = [0, 1]
         self.save_plot = False
         self.plot_path = 'render/' #folder where plots are saved to
         self.plot_style = 'default' #can be default, dark, ...
+        self.plot_text_style = 'default' #can be default, LaTeX, ...
         self.colorblind_mode = False
         #if colorblind is enabled, set type of colorblindness
         #available: deuteranopia, protanopia, tritanopia. defauld=deuteranopia
         self.colorblind_type = 'deuteranopia'
-        
+        self.verbose = True #output stats to console
+
         #population variables
         self.pop_size = 2000
         self.mean_age = 45
@@ -102,8 +105,8 @@ class Configuration():
         '''
 
         #palette colors are: [healthy, infected, immune, dead]
-        palettes = {'regular': {'default': ['gray', 'red', 'green', 'black'],
-                                'dark': ['#404040', '#ff0000', '#00ff00', '#000000']},
+        palettes = {'regular': {'default': ['#1C758A', '#CF5044', '#BBBBBB', '#444444'],
+                                'dark': ['#1C758A', '#CF5044', '#BBBBBB', '#444444']},
                     'deuteranopia': {'default': ['gray', '#a50f15', '#08519c', 'black'],
                                      'dark': ['#404040', '#fcae91', '#6baed6', '#000000']},
                     'protanopia': {'default': ['gray', '#a50f15', '08519c', 'black'],

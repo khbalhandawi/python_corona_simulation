@@ -15,7 +15,7 @@ from path_planning import go_to_location, set_destination, check_at_destination,
 keep_at_destination, reset_destinations
 from population import initialize_population, initialize_destination_matrix,\
 set_destination_bounds, save_data, save_population, Population_trackers
-from visualiser import build_fig, draw_tstep, set_style
+from visualiser import build_fig, draw_tstep, set_style, build_fig_SIRonly, draw_SIRonly
 
 #set seed for reproducibility
 #np.random.seed(100)
@@ -34,9 +34,6 @@ class Simulation():
 
         #initalise destinations vector
         self.destinations = initialize_destination_matrix(self.Config.pop_size, 1)
-
-        self.fig, self.spec, self.ax1, self.ax2 = build_fig(self.Config)
-
         #set_style(self.Config)
 
 
@@ -125,11 +122,12 @@ class Simulation():
                        self.fig, self.spec, self.ax1, self.ax2)
 
         #report stuff to console
-        sys.stdout.write('\r')
-        sys.stdout.write('%i: healthy: %i, infected: %i, immune: %i, in treatment: %i, \
-dead: %i, of total: %i' %(self.frame, self.pop_tracker.susceptible[-1], self.pop_tracker.infectious[-1],
-                        self.pop_tracker.recovered[-1], len(self.population[self.population[:,10] == 1]),
-                        self.pop_tracker.fatalities[-1], self.Config.pop_size))
+        if self.Config.verbose:
+            sys.stdout.write('\r')
+            sys.stdout.write('%i: healthy: %i, infected: %i, immune: %i, in treatment: %i, \
+                            dead: %i, of total: %i' %(self.frame, self.pop_tracker.susceptible[-1], self.pop_tracker.infectious[-1],
+                            self.pop_tracker.recovered[-1], len(self.population[self.population[:,10] == 1]),
+                            self.pop_tracker.fatalities[-1], self.Config.pop_size))
 
         #save popdata if required
         if self.Config.save_pop and (self.frame % self.Config.save_pop_freq) == 0:
@@ -149,7 +147,7 @@ dead: %i, of total: %i' %(self.frame, self.pop_tracker.susceptible[-1], self.pop
         '''
 
         if self.frame == 50:
-            print('\ninfecting person')
+            print('\ninfecting person (Patient Zero)')
             self.population[0][6] = 1
             self.population[0][8] = 50
             self.population[0][10] = 1
@@ -158,6 +156,9 @@ dead: %i, of total: %i' %(self.frame, self.pop_tracker.susceptible[-1], self.pop
     def run(self):
         '''run simulation'''
 
+        if self.Config.visualise:
+            self.fig, self.spec, self.ax1, self.ax2 = build_fig(self.Config)
+        
         i = 0
         
         while i < self.Config.simulation_steps:
@@ -170,10 +171,16 @@ dead: %i, of total: %i' %(self.frame, self.pop_tracker.susceptible[-1], self.pop
             #check whether to end if no infecious persons remain.
             #check if self.frame is above some threshold to prevent early breaking when simulation
             #starts initially with no infections.
-            if self.Config.endif_no_infections and self.frame >= 500:
+            if self.Config.endif_no_infections and self.frame >= 300:
                 if len(self.population[(self.population[:,6] == 1) | 
                                        (self.population[:,6] == 4)]) == 0:
                     i = self.Config.simulation_steps
+
+        
+        if self.Config.plot_last_tstep:
+            self.fig_sir, self.spec_sir, self.ax1_sir = build_fig_SIRonly(self.Config)
+            draw_SIRonly(self.Config, self.population, self.pop_tracker, self.frame, 
+                            self.fig_sir, self.spec_sir, self.ax1_sir)
 
         if self.Config.save_data:
             save_data(self.population, self.pop_tracker)
@@ -189,7 +196,6 @@ dead: %i, of total: %i' %(self.frame, self.pop_tracker.susceptible[-1], self.pop
         print('total unaffected: %i' %len(self.population[self.population[:,6] == 0]))
 
 
-
 if __name__ == '__main__':
 
     #initialize
@@ -200,18 +206,24 @@ if __name__ == '__main__':
 
     #set color mode
     sim.Config.plot_style = 'default' #can also be dark
+    sim.Config.plot_text_style = 'LaTeX' #can also be LaTeX
+    sim.Config.visualise = True
+    sim.Config.plot_last_tstep = True
+    sim.Config.verbose = False
+    sim.Config.save_plot = True
 
+    sim.Config.infection_chance = 0.03
     #set colorblind mode if needed
     #sim.Config.colorblind_mode = True
     #set colorblind type (default deuteranopia)
     #sim.Config.colorblind_type = 'deuteranopia'
 
     #set reduced interaction
-    #sim.Config.set_reduced_interaction()
-    #sim.population_init()
+    # sim.Config.set_reduced_interaction()
+    # sim.population_init()
 
     #set lockdown scenario
-    #sim.Config.set_lockdown(lockdown_percentage = 0.1, lockdown_compliance = 0.95)
+    # sim.Config.set_lockdown(lockdown_percentage = 0.1, lockdown_compliance = 0.95)
 
     #set self-isolation scenario
     #sim.Config.set_self_isolation(self_isolate_proportion = 0.9,
