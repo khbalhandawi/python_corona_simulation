@@ -32,6 +32,8 @@ def initialize_population(Config, mean_age=45, max_age=105,
     12 : at destination: whether arrived at destination (0=traveling, 1=arrived)
     13 : wander_range_x : wander ranges on x axis for those who are confined to a location
     14 : wander_range_y : wander ranges on y axis for those who are confined to a location
+    15 : total force x
+    16 : total force y
 
     Keyword arguments
     -----------------
@@ -52,7 +54,7 @@ def initialize_population(Config, mean_age=45, max_age=105,
     '''
 
     #initialize population matrix
-    population = np.zeros((Config.pop_size, 15))
+    population = np.zeros((Config.pop_size, 17))
 
     #initalize unique IDs
     population[:,0] = [x for x in range(Config.pop_size)]
@@ -70,7 +72,7 @@ def initialize_population(Config, mean_age=45, max_age=105,
                                        size=(Config.pop_size,))
 
     #initialize random speeds
-    population[:,5] = np.random.normal(Config.speed, Config.speed / 3)
+    # population[:,5] = np.random.normal(Config.speed, Config.speed / 3)
 
     #initalize ages
     std_age = (max_age - mean_age) / 3

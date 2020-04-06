@@ -9,12 +9,12 @@ from config import Configuration, config_error
 from environment import build_hospital
 from infection import find_nearby, infect, recover_or_die, compute_mortality,\
 healthcare_infection_correction
-from motion import update_positions, out_of_bounds, update_randoms,\
-get_motion_parameters
+from motion import update_positions, update_velocities, update_randoms,\
+    update_wall_forces, get_motion_parameters
 from path_planning import go_to_location, set_destination, check_at_destination,\
-keep_at_destination, reset_destinations
+    keep_at_destination, reset_destinations
 from population import initialize_population, initialize_destination_matrix,\
-set_destination_bounds, save_data, save_population, Population_trackers
+    set_destination_bounds, save_data, save_population, Population_trackers
 from visualiser import build_fig, draw_tstep, set_style, build_fig_SIRonly, draw_SIRonly
 
 #set seed for reproducibility
@@ -63,14 +63,6 @@ class Simulation():
             self.population = keep_at_destination(self.population, self.destinations,
                                                   self.Config.wander_factor)
 
-        #out of bounds
-        #define bounds arrays, excluding those who are marked as having a custom destination
-        if len(self.population[:,11] == 0) > 0:
-            _xbounds = np.array([[self.Config.xbounds[0] + 0.02, self.Config.xbounds[1] - 0.02]] * len(self.population[self.population[:,11] == 0]))
-            _ybounds = np.array([[self.Config.ybounds[0] + 0.02, self.Config.ybounds[1] - 0.02]] * len(self.population[self.population[:,11] == 0]))
-            self.population[self.population[:,11] == 0] = out_of_bounds(self.population[self.population[:,11] == 0], 
-                                                                        _xbounds, _ybounds)
-        
         #set randoms
         if self.Config.lockdown:
             if len(self.pop_tracker.infectious) == 0:
@@ -91,9 +83,21 @@ class Simulation():
             #update randoms
             self.population = update_randoms(self.population, self.Config.pop_size, self.Config.speed)
 
+        #out of bounds
+        #define bounds arrays, excluding those who are marked as having a custom destination
+        if len(self.population[:,11] == 0) > 0:
+            _xbounds = np.array([[self.Config.xbounds[0] + 0.02, self.Config.xbounds[1] - 0.02]] * len(self.population[self.population[:,11] == 0]))
+            _ybounds = np.array([[self.Config.ybounds[0] + 0.02, self.Config.ybounds[1] - 0.02]] * len(self.population[self.population[:,11] == 0]))
+
+            self.population[self.population[:,11] == 0] = update_wall_forces(self.population[self.population[:,11] == 0], 
+                                                                                 _xbounds, _ybounds)
+
+        #update velocities
+        self.population = update_velocities(self.population)
+        
         #for dead ones: set speed and heading to 0
         self.population[:,3:5][self.population[:,6] == 3] = 0
-        
+
         #update positions
         self.population = update_positions(self.population)
 
@@ -206,11 +210,11 @@ if __name__ == '__main__':
 
     #set color mode
     sim.Config.plot_style = 'default' #can also be dark
-    sim.Config.plot_text_style = 'LaTeX' #can also be LaTeX
+    sim.Config.plot_text_style = 'default' #can also be LaTeX
     sim.Config.visualise = True
     sim.Config.plot_last_tstep = True
     sim.Config.verbose = False
-    sim.Config.save_plot = True
+    sim.Config.save_plot = False
 
     sim.Config.infection_chance = 0.03
     #set colorblind mode if needed
