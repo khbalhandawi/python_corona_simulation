@@ -65,14 +65,20 @@ def initialize_population(Config, mean_age=45, max_age=105,
     population[:,2] = np.random.uniform(low = ybounds[0] + 0.05, high = ybounds[1] - 0.05, 
                                         size=(Config.pop_size,))
 
-    #initialize random headings -1 to 1
-    population[:,3] = np.random.normal(loc = 0, scale = 1/3, 
+    #initialize random speeds -0.25 to 0.25
+    population[:,3] = np.random.normal(loc = 0, scale = (Config.speed / Config.dt) / 3, 
                                        size=(Config.pop_size,))
-    population[:,4] = np.random.normal(loc = 0, scale = 1/3, 
+    population[:,4] = np.random.normal(loc = 0, scale = (Config.speed / Config.dt) / 3, 
                                        size=(Config.pop_size,))
 
+    #initialize random forces -25 to 25
+    # population[:,15] = np.random.normal(loc = 0, scale = 10*(Config.speed / Config.dt**2) / 3, 
+    #                                    size=(Config.pop_size,))
+    # population[:,16] = np.random.normal(loc = 0, scale = 10*(Config.speed / Config.dt**2) / 3, 
+    #                                    size=(Config.pop_size,))
+
     #initialize random speeds
-    # population[:,5] = np.random.normal(Config.speed, Config.speed / 3)
+    population[:,5] = np.random.normal(Config.speed, Config.speed / 3)
 
     #initalize ages
     std_age = (max_age - mean_age) / 3

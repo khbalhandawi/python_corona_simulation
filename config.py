@@ -33,6 +33,7 @@ class Configuration():
         
         #visualisation variables
         self.visualise = True #whether to visualise the simulation 
+        self.visualise_every_n_frame = 1 #Frequency of plot update
         self.plot_mode = 'sir' #default or sir
         self.plot_last_tstep = True #plot last frame SIR
         #size of the simulated world in coordinates
@@ -63,8 +64,16 @@ class Configuration():
         #std_speed = 0.01 / 3 #the standard deviation of the speed parameter
         #the proportion of the population that practices social distancing, simulated
         #by them standing still
-        proportion_distancing = 0
+        self.proportion_distancing = 0
+        self.social_distance_factor = 0.0
         self.speed = 0.01 #average speed of population
+        self.max_speed = 1.0 #average speed of population
+        self.dt = 0.01 #average speed of population
+        
+        self.wander_step_size = 0.01
+        self.gravity_strength = 1
+        self.wander_step_duration = 0.02
+
         #when people have an active destination, the wander range defines the area
         #surrounding the destination they will wander upon arriving
         self.wander_range = 0.05

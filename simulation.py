@@ -9,8 +9,8 @@ from config import Configuration, config_error
 from environment import build_hospital
 from infection import find_nearby, infect, recover_or_die, compute_mortality,\
 healthcare_infection_correction
-from motion import update_positions, update_velocities, update_randoms,\
-    update_wall_forces, get_motion_parameters
+from motion import update_positions, update_velocities,update_wall_forces,\
+    update_repulsive_forces, get_motion_parameters, update_gravity_forces
 from path_planning import go_to_location, set_destination, check_at_destination,\
     keep_at_destination, reset_destinations
 from population import initialize_population, initialize_destination_matrix,\
@@ -26,6 +26,8 @@ class Simulation():
         #load default config data
         self.Config = Configuration()
         self.frame = 0
+        self.time = 0
+        self.last_step_change = 0
 
         #initialize default population
         self.population_init()
@@ -62,44 +64,34 @@ class Simulation():
             #keep them at destination
             self.population = keep_at_destination(self.population, self.destinations,
                                                   self.Config.wander_factor)
-
-        #set randoms
-        if self.Config.lockdown:
-            if len(self.pop_tracker.infectious) == 0:
-                mx = 0
-            else:
-                mx = np.max(self.pop_tracker.infectious)
-
-            if len(self.population[self.population[:,6] == 1]) >= len(self.population) * self.Config.lockdown_percentage or\
-               mx >= (len(self.population) * self.Config.lockdown_percentage):
-                #reduce speed of all members of society
-                self.population[:,5] = np.clip(self.population[:,5], a_min = None, a_max = 0.001)
-                #set speeds of complying people to 0
-                self.population[:,5][self.Config.lockdown_vector == 0] = 0
-            else:
-                #update randoms
-                self.population = update_randoms(self.population, self.Config.pop_size, self.Config.speed)
-        else:
-            #update randoms
-            self.population = update_randoms(self.population, self.Config.pop_size, self.Config.speed)
+        
+        #gravity wells
+        [self.population, self.last_step_change] = update_gravity_forces(self.population, 
+                            self.Config.wander_step_size, self.time, self.Config.gravity_strength, 
+                            self.Config.wander_step_duration, self.last_step_change)
+        
+        #activate social distancing
+        if self.Config.social_distance_factor > 0:
+            self.population = update_repulsive_forces(self.population, self.Config.social_distance_factor)
 
         #out of bounds
         #define bounds arrays, excluding those who are marked as having a custom destination
         if len(self.population[:,11] == 0) > 0:
-            _xbounds = np.array([[self.Config.xbounds[0] + 0.02, self.Config.xbounds[1] - 0.02]] * len(self.population[self.population[:,11] == 0]))
-            _ybounds = np.array([[self.Config.ybounds[0] + 0.02, self.Config.ybounds[1] - 0.02]] * len(self.population[self.population[:,11] == 0]))
+            buffer = 0.0
+            _xbounds = np.array([[self.Config.xbounds[0] + buffer, self.Config.xbounds[1] - buffer]] * len(self.population[self.population[:,11] == 0]))
+            _ybounds = np.array([[self.Config.ybounds[0] + buffer, self.Config.ybounds[1] - buffer]] * len(self.population[self.population[:,11] == 0]))
 
             self.population[self.population[:,11] == 0] = update_wall_forces(self.population[self.population[:,11] == 0], 
                                                                                  _xbounds, _ybounds)
 
         #update velocities
-        self.population = update_velocities(self.population)
-        
+        self.population = update_velocities(self.population,self.Config)
+
         #for dead ones: set speed and heading to 0
         self.population[:,3:5][self.population[:,6] == 3] = 0
 
         #update positions
-        self.population = update_positions(self.population)
+        self.population = update_positions(self.population,self.Config)
 
         #find new infections
         self.population, self.destinations = infect(self.population, self.Config, self.frame, 
@@ -121,7 +113,7 @@ class Simulation():
         self.pop_tracker.update_counts(self.population)
 
         #visualise
-        if self.Config.visualise:
+        if self.Config.visualise and (self.frame % self.Config.visualise_every_n_frame) == 0:
             draw_tstep(self.Config, self.population, self.pop_tracker, self.frame, 
                        self.fig, self.spec, self.ax1, self.ax2)
 
@@ -141,6 +133,7 @@ class Simulation():
 
         #update frame
         self.frame += 1
+        self.time += self.Config.dt
 
 
     def callback(self):
@@ -207,16 +200,41 @@ if __name__ == '__main__':
 
     #set number of simulation steps
     sim.Config.simulation_steps = 20000
+    sim.Config.pop_size = 600
 
-    #set color mode
-    sim.Config.plot_style = 'default' #can also be dark
-    sim.Config.plot_text_style = 'default' #can also be LaTeX
-    sim.Config.visualise = True
+    #set visuals
+    # sim.Config.plot_style = 'dark' #can also be dark
+    # sim.Config.plot_text_style = 'LaTeX' #can also be LaTeX
+    # sim.Config.visualise = True
+    # sim.Config.visualise_every_n_frame = 1
+    # sim.Config.plot_last_tstep = True
+    # sim.Config.verbose = False
+    # sim.Config.save_plot = True
+
+    sim.Config.plot_style = 'dark' #can also be dark
+    sim.Config.plot_text_style = 'LaTeX' #can also be LaTeX
+    sim.Config.visualise = False
+    sim.Config.visualise_every_n_frame = 1
     sim.Config.plot_last_tstep = True
     sim.Config.verbose = False
-    sim.Config.save_plot = False
+    sim.Config.save_plot = True
 
-    sim.Config.infection_chance = 0.03
+    #set infection parameters
+    sim.Config.infection_chance = 0.3
+    sim.Config.infection_range = 0.02
+    sim.Config.mortality_chance = 0.09 #global baseline chance of dying from the disease
+
+    #set movement parameters
+    sim.Config.speed = 0.15
+    sim.Config.max_speed = 0.3
+    sim.Config.dt = 0.01
+    sim.Config.social_distance_factor = 0.0001 * 0.0
+
+    sim.Config.wander_step_size = 0.00
+    sim.Config.gravity_strength = 1
+    sim.Config.wander_step_duration = sim.Config.dt * 10
+
+    sim.population_init()
     #set colorblind mode if needed
     #sim.Config.colorblind_mode = True
     #set colorblind type (default deuteranopia)

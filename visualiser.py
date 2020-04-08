@@ -29,16 +29,25 @@ def build_fig(Config, figsize=(10,5)):
     set_style(Config)
     fig = plt.figure(figsize=(10,5))
     spec = fig.add_gridspec(ncols=2, nrows=1, width_ratios=[5,5])
-
+    
     ax1 = fig.add_subplot(spec[0,0])
     # plt.title('infection simulation')
     plt.xlim(Config.xbounds[0], Config.xbounds[1])
     plt.ylim(Config.ybounds[0], Config.ybounds[1])
 
+    lower_corner = (Config.xbounds[0],Config.ybounds[0])
+    width = Config.xbounds[1] - Config.xbounds[0]
+    height = Config.ybounds[1] - Config.ybounds[0]
+
+    # Draw boundary of world
+    rect = patches.Rectangle(lower_corner, width, height, linewidth=1, edgecolor='k', facecolor='none', fill='None', hatch=None)
+    # Add the patch to the Axes
+    ax1.add_patch(rect)
+
     ax2 = fig.add_subplot(spec[0,1])
     # ax2.set_title('number of infected')
     #ax2.set_xlim(0, simulation_steps)
-    ax2.set_ylim(0, Config.pop_size + 100)
+    ax2.set_ylim(0, Config.pop_size)
 
     ax2.set_xlabel('Simulation Steps', fontsize = 14)
     ax2.set_ylabel('Number of people', fontsize = 14)
@@ -59,7 +68,7 @@ def build_fig(Config, figsize=(10,5)):
     a4 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[2], fill='None', hatch=None)
     a5 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[3], fill='None', hatch=None)
 
-    handles, labels = [[a1,a2,a3,a4,a5], ['healthcare capacity','infectious','susceptible','recovered','fatalities']]
+    handles, labels = [[a1,a2,a3,a4,a5], ['healthcare capacity','infectious','healthy','recovered','dead']]
     fig.legend(handles, labels, loc='upper center', ncol=5, fontsize = 10)
 
     #if 
@@ -78,6 +87,9 @@ def build_fig_SIRonly(Config, figsize=(5,4)):
 
     ax1.set_xlabel('Simulation Steps')
     ax1.set_ylabel('Number of people')
+
+    ax1.set_xlabel('Simulation Steps', fontsize = 14)
+    ax1.set_ylabel('Number of people', fontsize = 14)
 
     #get color palettes
     palette = Config.get_palette()
@@ -112,9 +124,6 @@ def draw_tstep(Config, population, pop_tracker, frame,
     #get color palettes
     palette = Config.get_palette()
 
-    # ax1.clear()
-    # ax2.clear()
-
     # option 2, remove all lines and collections
     for artist in ax1.lines + ax1.collections + ax1.texts:
         artist.remove()
@@ -131,16 +140,16 @@ def draw_tstep(Config, population, pop_tracker, frame,
         
     #plot population segments
     healthy = population[population[:,6] == 0][:,1:3]
-    ax1.scatter(healthy[:,0], healthy[:,1], color=palette[0], s = 2, label='healthy')
+    ax1.scatter(healthy[:,0], healthy[:,1], color=palette[0], s = 20, label='healthy')
     
     infected = population[population[:,6] == 1][:,1:3]
-    ax1.scatter(infected[:,0], infected[:,1], color=palette[1], s = 2, label='infected')
+    ax1.scatter(infected[:,0], infected[:,1], color=palette[1], s = 20, label='infected')
 
     immune = population[population[:,6] == 2][:,1:3]
-    ax1.scatter(immune[:,0], immune[:,1], color=palette[2], s = 2, label='immune')
+    ax1.scatter(immune[:,0], immune[:,1], color=palette[2], s = 20, label='immune')
     
     fatalities = population[population[:,6] == 3][:,1:3]
-    ax1.scatter(fatalities[:,0], fatalities[:,1], color=palette[3], s = 2, label='dead')
+    ax1.scatter(fatalities[:,0], fatalities[:,1], color=palette[3], s = 20, label='dead')
         
     
     #add text descriptors
@@ -189,11 +198,17 @@ def draw_tstep(Config, population, pop_tracker, frame,
     plt.pause(0.0001)
 
     if Config.save_plot:
+        
+        if Config.plot_style == 'default':
+            bg_color = 'w'
+        elif Config.plot_style == 'dark':
+            bg_color = "#121111"
+
         try:
-            fig.savefig('%s/%i.png' %(Config.plot_path, frame), dpi=300)
+            fig.savefig('%s/%i.png' %(Config.plot_path, frame), dpi=300, facecolor=bg_color)
         except:
             check_folder(Config.plot_path)
-            fig.savefig('%s/%i.png' %(Config.plot_path, frame), dpi=300)
+            fig.savefig('%s/%i.png' %(Config.plot_path, frame), dpi=300, facecolor=bg_color)
 
 def draw_SIRonly(Config, population, pop_tracker, frame,
                fig, spec, ax1):
@@ -206,7 +221,9 @@ def draw_SIRonly(Config, population, pop_tracker, frame,
     #get color palettes
     palette = Config.get_palette()
 
-    ax1.clear()
+    # option 2, remove all lines and collections
+    for artist in ax1.lines + ax1.collections + ax1.texts:
+        artist.remove()
 
     ax1.set_title('number of infected')
     # ax1.text(0, Config.pop_size * 0.05, 
@@ -239,8 +256,14 @@ def draw_SIRonly(Config, population, pop_tracker, frame,
     plt.pause(0.0001)
 
     if Config.save_plot:
+        
+        if Config.plot_style == 'default':
+            bg_color = 'w'
+        elif Config.plot_style == 'dark':
+            bg_color = "#121111"
+
         try:
-            fig.savefig('%s/Final_%i.pdf' %(Config.plot_path, frame), dpi=1000)
+            fig.savefig('%s/Final_%i.pdf' %(Config.plot_path, frame), dpi=1000, facecolor=bg_color)
         except:
             check_folder(Config.plot_path)
-            fig.savefig('%s/Final_%i.pdf' %(Config.plot_path, frame), dpi=1000)
+            fig.savefig('%s/Final_%i.pdf' %(Config.plot_path, frame), dpi=1000, facecolor=bg_color)
