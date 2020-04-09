@@ -203,32 +203,32 @@ if __name__ == '__main__':
     sim.Config.pop_size = 600
 
     #set visuals
-    # sim.Config.plot_style = 'dark' #can also be dark
-    # sim.Config.plot_text_style = 'LaTeX' #can also be LaTeX
-    # sim.Config.visualise = True
-    # sim.Config.visualise_every_n_frame = 1
-    # sim.Config.plot_last_tstep = True
-    # sim.Config.verbose = False
-    # sim.Config.save_plot = True
-
     sim.Config.plot_style = 'dark' #can also be dark
     sim.Config.plot_text_style = 'LaTeX' #can also be LaTeX
-    sim.Config.visualise = False
+    sim.Config.visualise = True
     sim.Config.visualise_every_n_frame = 1
     sim.Config.plot_last_tstep = True
     sim.Config.verbose = False
     sim.Config.save_plot = True
 
+    # sim.Config.plot_style = 'default' #can also be dark
+    # sim.Config.plot_text_style = 'default' #can also be LaTeX
+    # sim.Config.visualise = True
+    # sim.Config.visualise_every_n_frame = 1
+    # sim.Config.plot_last_tstep = True
+    # sim.Config.verbose = False
+    # sim.Config.save_plot = False
+
     #set infection parameters
     sim.Config.infection_chance = 0.3
-    sim.Config.infection_range = 0.02
+    sim.Config.infection_range = 0.03
     sim.Config.mortality_chance = 0.09 #global baseline chance of dying from the disease
 
     #set movement parameters
     sim.Config.speed = 0.15
     sim.Config.max_speed = 0.3
     sim.Config.dt = 0.01
-    sim.Config.social_distance_factor = 0.0001 * 0.0
+    sim.Config.social_distance_factor = 0.0001 * 0.3
 
     sim.Config.wander_step_size = 0.00
     sim.Config.gravity_strength = 1

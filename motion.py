@@ -50,7 +50,7 @@ def update_velocities(population,Config):
         population[speed > max_speed,i + 3] *= max_speed / speed[speed > max_speed]
 
         # Limit force
-        population[:,i + 15] *= 0.0
+        population[:,i + 15] = 0.0
 
         # population[speed < min_speed,v_i[i]] *= min_speed / speed[speed < min_speed]
 
@@ -149,15 +149,15 @@ def update_wall_forces(population, xbounds, ybounds):
         population[:,i + 1][bounce_ur] = ur_bound[i][bounce_ur] - 0.005
 
         # Repelling force
-        # wall_force[:,i] += np.maximum((-1 / wall_buffer**1 + 1 / to_lower**1), 0)
-        # wall_force[:,i] -= np.maximum((-1 / wall_buffer**1 + 1 / to_upper**1), 0)
+        wall_force[:,i] += np.maximum((-1 / wall_buffer**1 + 1 / to_lower**1), 0)
+        wall_force[:,i] -= np.maximum((-1 / wall_buffer**1 + 1 / to_upper**1), 0)
 
         # Repelling force
         # wall_force[:,i] += np.maximum((1 / to_lower), 0)
         # wall_force[:,i] -= np.maximum((1 / to_upper), 0)
 
-        wall_force[:,i][to_lower < wall_buffer] += abs(1 / ((to_lower[to_lower < wall_buffer])**2))
-        wall_force[:,i][to_upper < wall_buffer] -= abs(1 / ((to_upper[to_upper < wall_buffer])**2))
+        # wall_force[:,i][to_lower < wall_buffer] += abs(1 / ((to_lower[to_lower < wall_buffer])**2))
+        # wall_force[:,i][to_upper < wall_buffer] -= abs(1 / ((to_upper[to_upper < wall_buffer])**2))
 
         population[:,i + 15] += wall_force[:,i]
 
