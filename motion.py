@@ -56,59 +56,6 @@ def update_velocities(population,Config):
 
     return population
 
-def out_of_bounds(population, xbounds, ybounds):
-    '''checks which people are about to go out of bounds and corrects
-
-    Function that updates headings of individuals that are about to 
-    go outside of the world boundaries.
-    
-    Keyword arguments
-    -----------------
-    population : ndarray
-        the array containing all the population information
-
-    xbounds, ybounds : list or tuple
-        contains the lower and upper bounds of the world [min, max]
-    '''
-    #update headings and positions where out of bounds
-    #update x heading
-    #determine number of elements that need to be updated
-
-    shp = population[:,3][(population[:,1] <= xbounds[:,0]) &
-                            (population[:,3] < 0)].shape
-    population[:,3][(population[:,1] <= xbounds[:,0]) &
-                    (population[:,3] < 0)] = np.clip(np.random.normal(loc = 0.5, 
-                                                                        scale = 0.5/3,
-                                                                        size = shp),
-                                                        a_min = 0.05, a_max = 1)
-
-    shp = population[:,3][(population[:,1] >= xbounds[:,1]) &
-                            (population[:,3] > 0)].shape
-    population[:,3][(population[:,1] >= xbounds[:,1]) &
-                    (population[:,3] > 0)] = np.clip(-np.random.normal(loc = 0.5, 
-                                                                        scale = 0.5/3,
-                                                                        size = shp),
-                                                        a_min = -1, a_max = -0.05)
-
-    #update y heading
-    shp = population[:,4][(population[:,2] <= ybounds[:,0]) &
-                            (population[:,4] < 0)].shape
-    population[:,4][(population[:,2] <= ybounds[:,0]) &
-                    (population[:,4] < 0)] = np.clip(np.random.normal(loc = 0.5, 
-                                                                        scale = 0.5/3,
-                                                                        size = shp),
-                                                        a_min = 0.05, a_max = 1)
-
-    shp = population[:,4][(population[:,2] >= ybounds[:,1]) &
-                            (population[:,4] > 0)].shape
-    population[:,4][(population[:,2] >= ybounds[:,1]) &
-                    (population[:,4] > 0)] = np.clip(-np.random.normal(loc = 0.5, 
-                                                                        scale = 0.5/3,
-                                                                        size = shp),
-                                                        a_min = -1, a_max = -0.05)
-
-    return population
-
 def update_wall_forces(population, xbounds, ybounds):
 
     '''checks which people are about to go out of bounds and corrects
@@ -161,7 +108,7 @@ def update_wall_forces(population, xbounds, ybounds):
 
         population[:,i + 15] += wall_force[:,i]
 
-    # Update position
+    # Update forces
     return population
 
 

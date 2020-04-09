@@ -96,3 +96,12 @@ print(F1 - F2)
 
 # B = d < 0
 # B = B.astype(np.int)
+
+# input array
+x = np.array([[ 1., 2., 3.], [ 4., 5., 6.], [ 7., 8., 9.]])
+
+# random boolean mask for which values will be changed
+mask = np.random.randint(0,2,size=x.shape).astype(np.bool)
+
+# use your mask to replace values in your input array
+x[mask] = 0

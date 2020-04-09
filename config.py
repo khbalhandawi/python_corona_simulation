@@ -74,6 +74,10 @@ class Configuration():
         self.gravity_strength = 1
         self.wander_step_duration = 0.02
 
+        self.social_distance_threshold_on = 0.0 # number of infected
+        self.social_distance_threshold_off = 0.0 # number of remaining infected people
+        self.social_distance_violation = 0.0 # number of people
+
         #when people have an active destination, the wander range defines the area
         #surrounding the destination they will wander upon arriving
         self.wander_range = 0.05

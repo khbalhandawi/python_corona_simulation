@@ -7,6 +7,7 @@ from glob import glob
 import os
 
 import numpy as np
+import random
 
 from motion import get_motion_parameters
 from utils import check_folder
@@ -34,6 +35,7 @@ def initialize_population(Config, mean_age=45, max_age=105,
     14 : wander_range_y : wander ranges on y axis for those who are confined to a location
     15 : total force x
     16 : total force y
+    17 : violator (0: complaint 1: violator)
 
     Keyword arguments
     -----------------
@@ -54,7 +56,7 @@ def initialize_population(Config, mean_age=45, max_age=105,
     '''
 
     #initialize population matrix
-    population = np.zeros((Config.pop_size, 17))
+    population = np.zeros((Config.pop_size, 18))
 
     #initalize unique IDs
     population[:,0] = [x for x in range(Config.pop_size)]
@@ -66,16 +68,14 @@ def initialize_population(Config, mean_age=45, max_age=105,
                                         size=(Config.pop_size,))
 
     #initialize random speeds -0.25 to 0.25
-    population[:,3] = np.random.normal(loc = 0, scale = (Config.speed / Config.dt) / 3, 
-                                       size=(Config.pop_size,))
-    population[:,4] = np.random.normal(loc = 0, scale = (Config.speed / Config.dt) / 3, 
-                                       size=(Config.pop_size,))
 
-    #initialize random forces -25 to 25
-    # population[:,15] = np.random.normal(loc = 0, scale = 10*(Config.speed / Config.dt**2) / 3, 
-    #                                    size=(Config.pop_size,))
-    # population[:,16] = np.random.normal(loc = 0, scale = 10*(Config.speed / Config.dt**2) / 3, 
-    #                                    size=(Config.pop_size,))
+    vect_un = np.random.uniform(low = -1, 
+                                high = 1,
+                                size = (Config.pop_size,2))
+
+    vect = vect_un / np.linalg.norm(vect_un,axis=1)[:,np.newaxis]
+
+    population[:,3:5] = Config.max_speed * vect
 
     #initialize random speeds
     population[:,5] = np.random.normal(Config.speed, Config.speed / 3)
@@ -91,6 +91,10 @@ def initialize_population(Config, mean_age=45, max_age=105,
 
     #build recovery_vector
     population[:,9] = np.random.normal(loc = 0.5, scale = 0.5 / 3, size=(Config.pop_size,))
+
+    #Randomly select violators
+    violators = random.choices(range(int(Config.pop_size)), k=int(Config.social_distance_violation))
+    population[violators,17] = 1
 
     return population
 

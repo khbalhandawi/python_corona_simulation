@@ -28,6 +28,8 @@ class Simulation():
         self.frame = 0
         self.time = 0
         self.last_step_change = 0
+        self.above_act_thresh = False
+        self.above_deact_thresh = False
 
         #initialize default population
         self.population_init()
@@ -70,9 +72,23 @@ class Simulation():
                             self.Config.wander_step_size, self.time, self.Config.gravity_strength, 
                             self.Config.wander_step_duration, self.last_step_change)
         
-        #activate social distancing
-        if self.Config.social_distance_factor > 0:
-            self.population = update_repulsive_forces(self.population, self.Config.social_distance_factor)
+        #activate social distancing only for compliant individuals
+
+        if not self.above_act_thresh and self.Config.social_distance_threshold_on > 0:
+            # If not previously above infection threshold activate when threshold reached
+            self.above_act_thresh = sum(self.population[:,6] == 1) >= self.Config.social_distance_threshold_on
+        elif self.Config.social_distance_threshold_on == 0:
+            self.above_act_thresh = True
+
+        if self.above_act_thresh and not self.above_deact_thresh and self.Config.social_distance_threshold_off > 0:
+            # If previously went above infection threshold deactivate when threshold reached
+            self.above_deact_thresh = sum(self.population[:,6] == 1) <= \
+                                       self.Config.social_distance_threshold_off
+
+        act_social_distancing = self.above_act_thresh and not self.above_deact_thresh
+
+        if self.Config.social_distance_factor > 0 and act_social_distancing:
+            self.population[self.population[:,17] == 0] = update_repulsive_forces(self.population[self.population[:,17] == 0], self.Config.social_distance_factor)
 
         #out of bounds
         #define bounds arrays, excluding those who are marked as having a custom destination
@@ -87,8 +103,9 @@ class Simulation():
         #update velocities
         self.population = update_velocities(self.population,self.Config)
 
-        #for dead ones: set speed and heading to 0
+        #for dead ones: set velocity and social distancing to 0 for dead ones
         self.population[:,3:5][self.population[:,6] == 3] = 0
+        self.population[:,17][self.population[:,6] == 3] = 1
 
         #update positions
         self.population = update_positions(self.population,self.Config)
@@ -214,7 +231,7 @@ if __name__ == '__main__':
     # sim.Config.plot_style = 'default' #can also be dark
     # sim.Config.plot_text_style = 'default' #can also be LaTeX
     # sim.Config.visualise = True
-    # sim.Config.visualise_every_n_frame = 1
+    # sim.Config.visualise_every_n_frame = 10
     # sim.Config.plot_last_tstep = True
     # sim.Config.verbose = False
     # sim.Config.save_plot = False
@@ -228,7 +245,22 @@ if __name__ == '__main__':
     sim.Config.speed = 0.15
     sim.Config.max_speed = 0.3
     sim.Config.dt = 0.01
-    sim.Config.social_distance_factor = 0.0001 * 0.3
+    # sim.Config.social_distance_factor = 0.0 # run 0
+
+    # sim.Config.social_distance_factor = 0.0001 * 0.2 # run 1
+
+    # sim.Config.social_distance_factor = 0.0001 * 0.22 # run 2
+
+    # sim.Config.social_distance_factor = 0.0001 * 0.25 # run 3
+
+    # sim.Config.social_distance_factor = 0.0001 * 0.3 # run 4
+
+    # sim.Config.social_distance_factor = 0.0001 * 0.3 # run 5
+    # sim.Config.social_distance_violation = 20 # number of people # run 5
+
+    sim.Config.social_distance_factor = 0.0001 * 0.3 # run 6
+    sim.Config.social_distance_threshold_on = 20 # number of people # run 6
+    sim.Config.social_distance_threshold_off = 5 # number of people # run 6
 
     sim.Config.wander_step_size = 0.00
     sim.Config.gravity_strength = 1

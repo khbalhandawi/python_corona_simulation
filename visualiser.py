@@ -40,17 +40,24 @@ def build_fig(Config, figsize=(10,5)):
     height = Config.ybounds[1] - Config.ybounds[0]
 
     # Draw boundary of world
-    rect = patches.Rectangle(lower_corner, width, height, linewidth=1, edgecolor='k', facecolor='none', fill='None', hatch=None)
+    if Config.plot_style.lower() == 'dark':
+        bound_color = 'w'
+    elif Config.plot_style.lower() == 'default':
+        bound_color = 'k'
+        
+    rect = patches.Rectangle(lower_corner, width, height, linewidth=1, edgecolor=bound_color, facecolor='none', fill='None', hatch=None)
     # Add the patch to the Axes
     ax1.add_patch(rect)
+    ax1.axis('off')
 
+    # SIR graph
     ax2 = fig.add_subplot(spec[0,1])
     # ax2.set_title('number of infected')
     #ax2.set_xlim(0, simulation_steps)
     ax2.set_ylim(0, Config.pop_size)
 
     ax2.set_xlabel('Simulation Steps', fontsize = 14)
-    ax2.set_ylabel('Number of people', fontsize = 14)
+    ax2.set_ylabel('Number sof people', fontsize = 14)
 
     #get color palettes
     palette = Config.get_palette()
