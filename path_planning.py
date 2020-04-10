@@ -49,7 +49,7 @@ def go_to_location(patient, destination, location_bounds, dest_no=1):
     return patient, destination
 
 
-def set_destination(population, destinations):
+def set_destination(population, destinations, travel_speed = 2):
     '''sets destination of population
 
     Sets the destination of population if destination marker is not 0.
@@ -83,15 +83,15 @@ def set_destination(population, destinations):
         #set speed to 0.5
         population[:,3][(population[:,11] == d) &
                         (population[:,12] == 0)] = head_x[(population[:,11] == d) &
-                                                          (population[:,12] == 0)] * 3.5
+                                                          (population[:,12] == 0)] * travel_speed
         population[:,4][(population[:,11] == d) &
                         (population[:,12] == 0)] = head_y[(population[:,11] == d) &
-                                                          (population[:,12] == 0)] * 3.5
+                                                          (population[:,12] == 0)] * travel_speed
 
     return population
 
 
-def check_at_destination(population, destinations, wander_factor=1.5):
+def check_at_destination(population, destinations, wander_factor=1):
     '''check who is at their destination already
 
     Takes subset of population with active destination and
@@ -128,8 +128,6 @@ def check_at_destination(population, destinations, wander_factor=1.5):
             #mark those as arrived
             at_dest[:,12] = 1
 
-            #at_dest[:,5] = 0.001
-
             #reinsert into population
             population[(np.abs(population[:,1] - dest_x) < (population[:,13] * wander_factor)) & 
                         (np.abs(population[:,2] - dest_y) < (population[:,14] * wander_factor)) &
@@ -138,7 +136,7 @@ def check_at_destination(population, destinations, wander_factor=1.5):
 
     return population
 
-def keep_at_destination(population, destinations, destination_bounds, wander_factor=1):
+def keep_at_destination(population, destination_bounds):
     '''keeps those who have arrived, within wander range
 
     Function that keeps those who have been marked as arrived at their
@@ -149,12 +147,9 @@ def keep_at_destination(population, destinations, destination_bounds, wander_fac
     population : ndarray
         the array containing all the population information
 
-    destinations : ndarray
-        the array containing all destinations information
-
-    wander_factor : int or float
-        defines how far outside of 'wander range' the destination reached
-        is triggered
+    destination_bounds : list or tuple
+        defines bounds for the location the individual will be roam in when sent
+        there. format: [xmin, ymin, xmax, ymax]
     ''' 
 
     #how many destinations are active
@@ -169,11 +164,6 @@ def keep_at_destination(population, destinations, destination_bounds, wander_fac
         ids = np.int32(arrived[:,0]) # find unique IDs of arrived persons
         
         #check if there are those out of bounds
-        #replace x oob
-        #where x larger than destination + wander, AND heading wrong way, set heading negative
-
-        #out of bounds
-        #define bounds arrays, excluding those who are marked as having a custom destination
         i_xlower = destination_bounds[0]; i_xupper = destination_bounds[2]
         i_ylower = destination_bounds[1]; i_yupper = destination_bounds[3]
 

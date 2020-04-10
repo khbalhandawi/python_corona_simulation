@@ -7,7 +7,7 @@ import numpy as np
 import scipy.spatial.distance as cd
 from random import gauss
 
-def update_positions(population,Config):
+def update_positions(population, dt = 0.01):
     '''update positions of all people
 
     Uses heading and speed to update all positions for
@@ -17,17 +17,20 @@ def update_positions(population,Config):
     -----------------
     population : ndarray
         the array containing all the population information
+        
+     dt : float 
+        Time increment used for incrementing velocity due to forces
     '''
 
     #update positions
     #x
-    population[:,1] += population[:,3] * Config.dt
+    population[:,1] += population[:,3] * dt
     #y
-    population[:,2] += population [:,4] * Config.dt
+    population[:,2] += population[:,4] * dt
 
     return population
 
-def update_velocities(population,Config):
+def update_velocities(population, max_speed = 0.3, dt = 0.01):
     '''update positions of all people
 
     Uses heading and speed to update all positions for
@@ -37,13 +40,17 @@ def update_velocities(population,Config):
     -----------------
     population : ndarray
         the array containing all the population information
-    '''
 
-    max_speed = Config.max_speed
+    max_speed : float
+        Maximum speed cap for individuals
+
+     dt : float 
+        Time increment used for incrementing velocity due to forces
+    '''
 
     for i in range(2):
         # Apply force
-        population[:,i + 3] += population[:,i + 15] * Config.dt
+        population[:,i + 3] += population[:,i + 15] * dt
 
         # Limit speed
         speed = np.linalg.norm(population[:,3:5],axis = 1)
@@ -52,11 +59,9 @@ def update_velocities(population,Config):
         # Limit force
         population[:,i + 15] = 0.0
 
-        # population[speed < min_speed,v_i[i]] *= min_speed / speed[speed < min_speed]
-
     return population
 
-def update_wall_forces(population, xbounds, ybounds):
+def update_wall_forces(population, xbounds, ybounds, wall_buffer = 0.01, bounce_buffer = 0.005):
 
     '''checks which people are about to go out of bounds and corrects
 
@@ -70,41 +75,53 @@ def update_wall_forces(population, xbounds, ybounds):
 
     xbounds, ybounds : list or tuple
         contains the lower and upper bounds of the world [min, max]
+
+    wall_buffer, bounce_buffer : float
+        buffer used for wall force calculation and returning 
+        individuals within bounds
     '''
+
     dl_bound = [ xbounds[:,0], ybounds[:,0] ]
     ur_bound = [ xbounds[:,1], ybounds[:,1] ]
     
     # Avoid walls
-    wall_buffer = 1
-    wall_buffer = 0.01
     wall_force = np.zeros_like(population[:,0:2])
     
     for i in range(2):
+        
         to_lower = population[:,i + 1] - dl_bound[i]
-        # to_lower[to_lower <= 0.0] = -wall_buffer
-
         to_upper = ur_bound[i] - population[:,i + 1]
-        # to_upper[to_upper <= 0.0] = -wall_buffer
-
-        # Bounce
-        bounce_lo = (to_lower < 0.0) #& (population[:,i + 3] < 0)
+        
+        # Bounce individuals within the world
+        bounce_lo = (to_lower > -bounce_buffer) & (to_lower < 0.0) #& (population[:,i + 3] < 0)
         population[:,i + 3][bounce_lo] = abs(population[:,i + 3][bounce_lo])
-        population[:,i + 1][bounce_lo] = dl_bound[i][bounce_lo] + 0.005
+        population[:,i + 1][bounce_lo] = dl_bound[i][bounce_lo] + bounce_buffer
 
-        bounce_ur = (to_upper < 0.0) #& (population[:,i + 3] > 0)
+        bounce_ur = (to_upper > -bounce_buffer) & (to_upper < 0.0) #& (population[:,i + 3] > 0)
         population[:,i + 3][bounce_ur] = -abs(population[:,i + 3][bounce_ur])
-        population[:,i + 1][bounce_ur] = ur_bound[i][bounce_ur] - 0.005
+        population[:,i + 1][bounce_ur] = ur_bound[i][bounce_ur] - bounce_buffer
 
-        # Repelling force
-        wall_force[:,i] += np.maximum((-1 / wall_buffer**1 + 1 / to_lower**1), 0)
-        wall_force[:,i] -= np.maximum((-1 / wall_buffer**1 + 1 / to_upper**1), 0)
+        # Attract outside individuals returning to the world
+        lo_outside = (to_lower < 0.0) #& (population[:,i + 3] < 0)
+        wall_force[:,i][lo_outside] += abs(1 / ((to_lower[lo_outside])**1))
+        # wall_force[:,i][lo_outside] -= abs(1 / ((to_upper[lo_outside])**1))
+
+        ur_outside = (to_upper < 0.0) #& (population[:,i + 3] > 0)
+        wall_force[:,i][ur_outside] += abs(1 / ((to_lower[ur_outside])**1))
+        # wall_force[:,i][ur_outside] -= abs(1 / ((to_upper[ur_outside])**1))
+
+        # # Repelling force
+        # wall_force[:,i] += np.maximum((-1 / wall_buffer**1 + 1 / to_lower**1), 0)
+        # wall_force[:,i] -= np.maximum((-1 / wall_buffer**1 + 1 / to_upper**1), 0)
 
         # Repelling force
         # wall_force[:,i] += np.maximum((1 / to_lower), 0)
         # wall_force[:,i] -= np.maximum((1 / to_upper), 0)
 
-        # wall_force[:,i][to_lower < wall_buffer] += abs(1 / ((to_lower[to_lower < wall_buffer])**2))
-        # wall_force[:,i][to_upper < wall_buffer] -= abs(1 / ((to_upper[to_upper < wall_buffer])**2))
+        inside_wall_lower = (to_lower < wall_buffer) & (to_lower > -bounce_buffer)
+        inside_wall_upper = (to_upper < wall_buffer) & (to_lower > -bounce_buffer)
+        wall_force[:,i][inside_wall_lower] += abs(1 / ((to_lower[inside_wall_lower])**2))
+        wall_force[:,i][inside_wall_upper] -= abs(1 / ((to_upper[inside_wall_upper])**2))
 
         population[:,i + 15] += wall_force[:,i]
 
@@ -128,8 +145,8 @@ def update_repulsive_forces(population, social_distance_factor):
     population : ndarray
         the array containing all the population information
 
-    xbounds, ybounds : list or tuple
-        contains the lower and upper bounds of the world [min, max]
+    social_distance_factor : float
+        Amplitude of repulsive force used to enforce social distancing
     '''
 
     x = population[:,1]
@@ -150,9 +167,30 @@ def update_repulsive_forces(population, social_distance_factor):
     # Update forces
     return population
 
-def update_gravity_forces(population, wander_step_size, time, gravity_strength, 
-                          wander_step_duration, last_step_change):
+def update_gravity_forces(population, time, last_step_change, wander_step_size = 0.01, 
+                          gravity_strength = 0.1, wander_step_duration = 0.01):
 
+    '''updates random perturbation in forces near individuals to cause random motion
+
+    Function that returns geometric parameters of the destination
+    that the population members have set.
+
+    Keyword arguments:
+    ------------------
+    population : ndarray
+        the array containing all the population information
+
+    time : float
+        current simulation time
+
+    last_step_change : float
+        last time value at which a random perturbation was introduced
+    
+    wander_step_size, gravity_strength, wander_step_duration : float
+        proximity of perturbation to individuals, 
+        strength of attracion to perturbation,
+        length of time perturbation is present
+    '''
     # Gravity
     if wander_step_size != 0:
         if (time - last_step_change) > wander_step_duration:
@@ -175,6 +213,7 @@ def update_gravity_forces(population, wander_step_size, time, gravity_strength,
     return population, last_step_change
 
 def get_motion_parameters(xmin, ymin, xmax, ymax):
+
     '''gets destination center and wander ranges
 
     Function that returns geometric parameters of the destination
@@ -184,7 +223,6 @@ def get_motion_parameters(xmin, ymin, xmax, ymax):
     ------------------
         xmin, ymin, xmax, ymax : int or float
         lower and upper bounds of the destination area set.
-
     '''
 
     x_center = xmin + ((xmax - xmin) / 2)

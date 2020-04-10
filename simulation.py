@@ -50,7 +50,7 @@ class Simulation():
         '''
         takes a time step in the simulation
         '''
-
+        #======================================================================================#
         #check destinations if active
         #define motion vectors if destinations active and not everybody is at destination
         active_dests = len(self.population[self.population[:,11] != 0]) # look op this only once
@@ -62,16 +62,16 @@ class Simulation():
 
         if active_dests > 0 and len(self.population[self.population[:,12] == 1]) > 0:
             #keep them at destination
-            self.population = keep_at_destination(self.population, self.destinations,
-                                                  self.Config.isolation_bounds,
-                                                  self.Config.wander_factor)
-        
+            self.population = keep_at_destination(self.population, self.Config.isolation_bounds)
+
+        #======================================================================================#
         #gravity wells
         if self.Config.gravity_strength > 0:
             [self.population, self.last_step_change] = update_gravity_forces(self.population, 
-                                self.Config.wander_step_size, self.time, self.Config.gravity_strength, 
-                                self.Config.wander_step_duration, self.last_step_change)
+                                self.time, self.last_step_change, self.Config.wander_step_size, 
+                                self.Config.gravity_strength, self.Config.wander_step_duration)
         
+        #======================================================================================#
         #activate social distancing above a certain infection threshold
         if not self.above_act_thresh and self.Config.social_distance_threshold_on > 0:
             # If not previously above infection threshold activate when threshold reached
@@ -82,7 +82,7 @@ class Simulation():
         #deactivate social distancing after infection drops below threshold after using social distancing
         if self.above_act_thresh and not self.above_deact_thresh and self.Config.social_distance_threshold_off > 0:
             # If previously went above infection threshold deactivate when threshold reached
-            self.above_deact_thresh = sum(self.population[:,6] == 1) <= \
+            self.above_deact_thresh = sum(self.population[:,6][self.population[:,11] == 0] == 1) <= \
                                        self.Config.social_distance_threshold_off
 
         act_social_distancing = self.above_act_thresh and not self.above_deact_thresh
@@ -92,7 +92,7 @@ class Simulation():
             self.population[(self.population[:,17] == 0) &\
                             (self.population[:,11] == 0)] = update_repulsive_forces(self.population[(self.population[:,17] == 0) &\
                                                                                                     (self.population[:,11] == 0)], self.Config.social_distance_factor)
-
+        #======================================================================================#
         #out of bounds
         #define bounds arrays, excluding those who are marked as having a custom destination
         if len(self.population[:,11] == 0) > 0:
@@ -102,19 +102,22 @@ class Simulation():
 
             self.population[self.population[:,11] == 0] = update_wall_forces(self.population[self.population[:,11] == 0], 
                                                                                  _xbounds, _ybounds)
-
+        
+        #======================================================================================#
         #update velocities
         self.population[(self.population[:,11] == 0) |\
                         (self.population[:,12] == 1)] = update_velocities(self.population[(self.population[:,11] == 0) |\
-                                                                                          (self.population[:,12] == 1)],self.Config)
-
+                                                                                          (self.population[:,12] == 1)],
+                                                                                          self.Config.max_speed,self.Config.dt)
+        
         #for dead ones: set velocity and social distancing to 0 for dead ones
         self.population[:,3:5][self.population[:,6] == 3] = 0
         self.population[:,17][self.population[:,6] == 3] = 1
 
         #update positions
-        self.population = update_positions(self.population,self.Config)
+        self.population = update_positions(self.population,self.Config.dt)
 
+        #======================================================================================#
         #find new infections
         self.population, self.destinations = infect(self.population, self.Config, self.frame, 
                                                     send_to_location = self.Config.self_isolate, 
@@ -126,14 +129,17 @@ class Simulation():
         #recover and die
         self.population = recover_or_die(self.population, self.frame, self.Config)
 
+        #======================================================================================#
         #send cured back to population if self isolation active
         #perhaps put in recover or die class
         #send cured back to population
         self.population[:,11][self.population[:,6] == 2] = 0
 
+        #======================================================================================#
         #update population statistics
         self.pop_tracker.update_counts(self.population)
 
+        #======================================================================================#
         #visualise
         if self.Config.visualise and (self.frame % self.Config.visualise_every_n_frame) == 0:
             draw_tstep(self.Config, self.population, self.pop_tracker, self.frame, 
@@ -153,6 +159,7 @@ class Simulation():
         #run callback
         self.callback()
 
+        #======================================================================================#
         #update frame
         self.frame += 1
         self.time += self.Config.dt
@@ -250,30 +257,68 @@ if __name__ == '__main__':
     sim.Config.speed = 0.15
     sim.Config.max_speed = 0.3
     sim.Config.dt = 0.01
-    sim.Config.social_distance_factor = 0.0 # run 0
 
-    # sim.Config.social_distance_factor = 0.0001 * 0.2 # run 1
-
-    # sim.Config.social_distance_factor = 0.0001 * 0.22 # run 2
-
-    # sim.Config.social_distance_factor = 0.0001 * 0.25 # run 3
-
-    # sim.Config.social_distance_factor = 0.0001 * 0.3 # run 4
-
-    # sim.Config.social_distance_factor = 0.0001 * 0.3 # run 5
-    # sim.Config.social_distance_violation = 20 # number of people # run 5
-
-    # sim.Config.social_distance_factor = 0.0001 * 0.3 # run 6
-    # sim.Config.social_distance_threshold_on = 20 # number of people # run 6
-    # sim.Config.social_distance_threshold_off = 5 # number of people # run 6
-
-    sim.Config.wander_step_size = 0.00
-    sim.Config.gravity_strength = 1
+    sim.Config.wander_step_size = 0.01
+    sim.Config.gravity_strength = 0
     sim.Config.wander_step_duration = sim.Config.dt * 10
 
-    #set self-isolation scenario
-    sim.Config.wander_factor = 0.05
-    sim.Config.set_self_isolation(self_isolate_proportion = 0.9,
+    # run 0 (Business as usual)
+    # sim.Config.social_distance_factor = 0.0
+
+    # run 1 (social distancing)
+    # sim.Config.social_distance_factor = 0.0001 * 0.2
+
+    # run 2 (social distancing)
+    # sim.Config.social_distance_factor = 0.0001 * 0.22
+
+    # run 3 (social distancing)
+    # sim.Config.social_distance_factor = 0.0001 * 0.25
+
+    # run 4 (social distancing)
+    # sim.Config.social_distance_factor = 0.0001 * 0.3
+
+    # run 5 (social distancing with violators)
+    # sim.Config.social_distance_factor = 0.0001 * 0.3
+    # sim.Config.social_distance_violation = 20 # number of people
+
+    # run 6 (social distancing with second wave)
+    # sim.Config.social_distance_factor = 0.0001 * 0.3
+    # sim.Config.social_distance_threshold_on = 20 # number of people
+    # sim.Config.social_distance_threshold_off = 5 # number of people
+
+    # run 7 (self-isolation scenario)
+    # sim.Config.wander_factor_dest = 0.1
+    # sim.Config.set_self_isolation(self_isolate_proportion = 0.8,
+    #                              isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
+    #                              traveling_infects=False)
+
+    # run 8 (self-isolation scenario with social distancing after threshold)
+    # sim.Config.social_distance_factor = 0.0001 * 0.3
+    # sim.Config.social_distance_threshold_on = 20 # number of people 
+
+    # sim.Config.wander_factor_dest = 0.1
+    # sim.Config.set_self_isolation(self_isolate_proportion = 0.8,
+    #                              isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
+    #                              traveling_infects=False)
+
+    # run 9 (self-isolation scenario with social distancing after threshold and violators)
+    # sim.Config.social_distance_factor = 0.0001 * 0.3
+    # sim.Config.social_distance_violation = 20 # number of people
+    # sim.Config.social_distance_threshold_on = 20 # number of people
+
+    # sim.Config.wander_factor_dest = 0.1
+    # sim.Config.set_self_isolation(self_isolate_proportion = 0.8,
+    #                              isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
+    #                              traveling_infects=False)
+
+    # run 10 (self-isolation scenario with social distancing after threshold, violators and a 2nd wave)
+    sim.Config.social_distance_factor = 0.0001 * 0.3
+    sim.Config.social_distance_violation = 20 # number of people
+    sim.Config.social_distance_threshold_on = 20 # number of people
+    sim.Config.social_distance_threshold_off = 2 # number of people
+
+    sim.Config.wander_factor_dest = 0.1
+    sim.Config.set_self_isolation(self_isolate_proportion = 0.8,
                                  isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
                                  traveling_infects=False)
 

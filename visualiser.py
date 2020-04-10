@@ -118,13 +118,7 @@ def build_fig_SIRonly(Config, figsize=(5,4)):
     a3 = mlines.Line2D([], [], color=palette[0], marker='', markersize=5, linestyle='-')
     a4 = mlines.Line2D([], [], color=palette[2], marker='', markersize=5, linestyle='-')
     a5 = mlines.Line2D([], [], color=palette[3], marker='', markersize=5, linestyle='-')
-    # Legend actors type 2
-    # a1 = mlines.Line2D([], [], color=palette[1], marker='', markersize=5, linestyle=':')
-    # a2 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[1], fill='None', hatch=None)
-    # a3 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[0], fill='None', hatch=None)
-    # a4 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[2], fill='None', hatch=None)
-    # a5 = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor='none', facecolor=palette[3], fill='None', hatch=None)
-
+    
     # handles, labels = [[a1,a2,a3,a4,a5], ['healthcare capacity','infectious','susceptible','recovered','fatalities']]
     # fig.legend(handles, labels, loc='upper center', ncol=5, fontsize = 10)
 

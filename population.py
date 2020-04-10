@@ -77,9 +77,6 @@ def initialize_population(Config, mean_age=45, max_age=105,
 
     population[:,3:5] = Config.max_speed * vect
 
-    #initialize random speeds
-    population[:,5] = np.random.normal(Config.speed, Config.speed / 3)
-
     #initalize ages
     std_age = (max_age - mean_age) / 3
     population[:,7] = np.int32(np.random.normal(loc = mean_age, 
@@ -92,7 +89,7 @@ def initialize_population(Config, mean_age=45, max_age=105,
     #build recovery_vector
     population[:,9] = np.random.normal(loc = 0.5, scale = 0.5 / 3, size=(Config.pop_size,))
 
-    #Randomly select violators
+    #Randomly select social distancing violators
     violators = random.choices(range(int(Config.pop_size)), k=int(Config.social_distance_violation))
     population[violators,17] = 1
 

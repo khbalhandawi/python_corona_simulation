@@ -10,7 +10,7 @@ import numpy as np
 import os
 from os.path import isfile, join
  
-def convert_frames_to_video(pathIn,pathOut,fps):
+def convert_frames_to_video(pathIn,pathOut,fps,vtype):
     frame_array = []
     
     # count number of items inside directory
@@ -32,7 +32,10 @@ def convert_frames_to_video(pathIn,pathOut,fps):
         #inserting the frames into an image array
         frame_array.append(img)
     
-    out = cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
+    if vtype == 'avi':
+        out = cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
+    elif vtype == 'mp4':
+        out = cv2.VideoWriter(pathOut, cv2.VideoWriter_fourcc(*'H264'), fps, size)
      
     for i in range(len(frame_array)):
         # writing to a image array
@@ -40,10 +43,14 @@ def convert_frames_to_video(pathIn,pathOut,fps):
     out.release()
      
 def main():
-    pathIn= 'render_6'
-    pathOut = 'video_6.avi'
-    fps = 60.0
-    convert_frames_to_video(pathIn, pathOut, fps)
+    vtype = 'mp4'
+    indices = [0,7,8,9,10]
+
+    for i in indices:
+        pathIn= 'render_%i' %i
+        pathOut = 'video_%i.%s' %(i,vtype)
+        fps = 60.0
+        convert_frames_to_video(pathIn, pathOut, fps, vtype)
  
 if __name__=="__main__":
     main()
