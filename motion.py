@@ -174,55 +174,6 @@ def update_gravity_forces(population, wander_step_size, time, gravity_strength,
 
     return population, last_step_change
 
-def update_randoms(population, pop_size, speed=0.01, heading_update_chance=0.02, 
-                   speed_update_chance=0.02, heading_multiplication=0.05,
-                   speed_multiplication=1):
-    '''updates random states such as heading and speed
-    
-    Function that randomized the headings and speeds for population members
-    with settable odds.
-
-    Keyword arguments
-    -----------------
-    population : ndarray
-        the array containing all the population information
-    
-    pop_size : int
-        the size of the population
-
-    heading_update_chance : float
-        the odds of updating the heading of each member, each time step
-
-    speed_update_chance : float
-        the oodds of updating the speed of each member, each time step
-
-    heading_multiplication : int or float
-        factor to multiply heading with (default headings are between -1 and 1)
-
-    speed_multiplication : int or float
-        factor to multiply speed with (default speeds are between 0.0001 and 0.05
-
-    speed : int or float
-        mean speed of population members, speeds will be taken from gaussian distribution
-        with mean 'speed' and sd 'speed / 3'
-    '''
-    #randomly update heading
-    #x
-    update = np.random.random(size=(pop_size,))
-    shp = update[update <= heading_update_chance].shape
-    population[:,3][update <= heading_update_chance] = np.random.normal(loc = 0, 
-                                                        scale = 1/3,
-                                                        size = shp) * heading_multiplication
-    #y
-    update = np.random.random(size=(pop_size,))
-    shp = update[update <= heading_update_chance].shape
-    population[:,4][update <= heading_update_chance] = np.random.normal(loc = 0, 
-                                                        scale = 1/3,
-                                                        size = shp) * heading_multiplication
-
-    return population
-
-
 def get_motion_parameters(xmin, ymin, xmax, ymax):
     '''gets destination center and wander ranges
 

@@ -165,7 +165,7 @@ class Configuration():
 
 
     def set_self_isolation(self, self_isolate_proportion=0.9,
-                           isolation_bounds = [0.02, 0.02, 0.09, 0.98],
+                           isolation_bounds = [-0.28, 0.02, -0.02, 0.28],
                            traveling_infects=False):
         '''sets self-isolation scenario to active'''
 
@@ -173,10 +173,10 @@ class Configuration():
         self.isolation_bounds = isolation_bounds
         self.self_isolate_proportion = self_isolate_proportion
         #set roaming bounds to outside isolated area
-        self.xbounds = [0.1, 1.1]
+        self.xbounds = [0.02, 0.98]
         self.ybounds = [0.02, 0.98]
         #update plot bounds everything is shown
-        self.x_plot = [0, 1.1]
+        self.x_plot = [isolation_bounds[0] - 0.02, 1]
         self.y_plot = [0, 1]
         #update whether traveling agents also infect
         self.traveling_infects = traveling_infects

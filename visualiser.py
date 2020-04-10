@@ -4,7 +4,7 @@ contains all methods for visualisation tasks
 
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines #for legend actors
-import matplotlib.patches as patches #for legend actors
+import matplotlib.patches as patches #for boundaries
 import matplotlib as mpl
 import numpy as np
 
@@ -27,9 +27,14 @@ def set_style(Config):
 
 def build_fig(Config, figsize=(10,5)):
     set_style(Config)
-    fig = plt.figure(figsize=(10,5))
-    spec = fig.add_gridspec(ncols=2, nrows=1, width_ratios=[5,5])
-    
+
+    if not Config.self_isolate:
+        fig = plt.figure(figsize=(10,5))
+        spec = fig.add_gridspec(ncols=2, nrows=1, width_ratios=[5,5])
+    elif Config.self_isolate:
+        fig = plt.figure(figsize=(12,5))
+        spec = fig.add_gridspec(ncols=2, nrows=1, width_ratios=[7,5])
+
     ax1 = fig.add_subplot(spec[0,0])
     # plt.title('infection simulation')
     plt.xlim(Config.xbounds[0], Config.xbounds[1])
@@ -48,6 +53,12 @@ def build_fig(Config, figsize=(10,5)):
     rect = patches.Rectangle(lower_corner, width, height, linewidth=1, edgecolor=bound_color, facecolor='none', fill='None', hatch=None)
     # Add the patch to the Axes
     ax1.add_patch(rect)
+
+    if Config.self_isolate and Config.isolation_bounds != None:
+        build_hospital(Config.isolation_bounds[0], Config.isolation_bounds[2],
+                       Config.isolation_bounds[1], Config.isolation_bounds[3], ax1, 
+                       bound_color, addcross = False)
+
     ax1.axis('off')
 
     # SIR graph
@@ -139,11 +150,6 @@ def draw_tstep(Config, population, pop_tracker, frame,
 
     ax1.set_xlim(Config.x_plot[0], Config.x_plot[1])
     ax1.set_ylim(Config.y_plot[0], Config.y_plot[1])
-
-    if Config.self_isolate and Config.isolation_bounds != None:
-        build_hospital(Config.isolation_bounds[0], Config.isolation_bounds[2],
-                       Config.isolation_bounds[1], Config.isolation_bounds[3], ax1,
-                       addcross = False)
         
     #plot population segments
     healthy = population[population[:,6] == 0][:,1:3]
@@ -160,8 +166,8 @@ def draw_tstep(Config, population, pop_tracker, frame,
         
     
     #add text descriptors
-    ax1.text(Config.x_plot[0], 
-             Config.y_plot[1] + ((Config.y_plot[1] - Config.y_plot[0]) / 100), 
+    ax1.text(Config.xbounds[0], 
+             Config.ybounds[1] + ((Config.ybounds[1] - Config.ybounds[0]) / 100), 
              'timestep: %i, total: %i, healthy: %i infected: %i immune: %i fatalities: %i' %(frame,
                                                                                              len(population),
                                                                                              len(healthy), 

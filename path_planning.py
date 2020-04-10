@@ -5,7 +5,7 @@ and path planning
 
 import numpy as np
 
-from motion import get_motion_parameters, update_randoms
+from motion import get_motion_parameters, update_wall_forces
 
 def go_to_location(patient, destination, location_bounds, dest_no=1):
     '''sends patient to defined location
@@ -69,31 +69,29 @@ def set_destination(population, destinations):
 
     #set destination
     for d in active_dests:
-        dest_x = destinations[:,int((d - 1) * 2)]
-        dest_y = destinations[:,int(((d - 1) * 2) + 1)]
 
-        #compute new headings
-        head_x = dest_x - population[:,1]
-        head_y = dest_y - population[:,2]
+        to_destination = destinations[:,int((d - 1) * 2):int(((d - 1) * 2) + 2)] - population[:,1:3]
+        dist = np.linalg.norm(to_destination,axis=1)
+
+        head_x = to_destination[:,0] / dist
+        head_y = to_destination[:,1] / dist
 
         #head_x = head_x / np.sqrt(head_x)
         #head_y = head_y / np.sqrt(head_y)
 
         #reinsert headings into population of those not at destination yet
+        #set speed to 0.5
         population[:,3][(population[:,11] == d) &
                         (population[:,12] == 0)] = head_x[(population[:,11] == d) &
-                                                            (population[:,12] == 0)]
+                                                          (population[:,12] == 0)] * 3.5
         population[:,4][(population[:,11] == d) &
                         (population[:,12] == 0)] = head_y[(population[:,11] == d) &
-                                                            (population[:,12] == 0)]
-        #set speed to 0.01
-        population[:,5][(population[:,11] == d) &
-                        (population[:,12] == 0)] = 0.02
+                                                          (population[:,12] == 0)] * 3.5
 
     return population
 
 
-def check_at_destination(population, destinations, wander_factor=1.5, speed = 0.01):
+def check_at_destination(population, destinations, wander_factor=1.5):
     '''check who is at their destination already
 
     Takes subset of population with active destination and
@@ -129,9 +127,6 @@ def check_at_destination(population, destinations, wander_factor=1.5, speed = 0.
         if len(at_dest) > 0:
             #mark those as arrived
             at_dest[:,12] = 1
-            #insert random headings and speeds for those at destination
-            at_dest = update_randoms(at_dest, pop_size = len(at_dest), speed = speed,
-                                     heading_update_chance = 1, speed_update_chance = 1)
 
             #at_dest[:,5] = 0.001
 
@@ -142,9 +137,8 @@ def check_at_destination(population, destinations, wander_factor=1.5, speed = 0.
 
 
     return population
-        
 
-def keep_at_destination(population, destinations, wander_factor=1):
+def keep_at_destination(population, destinations, destination_bounds, wander_factor=1):
     '''keeps those who have arrived, within wander range
 
     Function that keeps those who have been marked as arrived at their
@@ -168,51 +162,30 @@ def keep_at_destination(population, destinations, wander_factor=1):
                                                 (population[:,12] == 1)])
 
     for d in active_dests:
-        dest_x = destinations[:,int((d - 1) * 2)][(population[:,12] == 1) &
-                                                    (population[:,11] == d)]
-        dest_y = destinations[:,int(((d - 1) * 2) + 1)][(population[:,12] == 1) &
-                                                        (population[:,11] == d)]
-
         #see who is marked as arrived
         arrived = population[(population[:,12] == 1) &
-                                (population[:,11] == d)]
+                             (population[:,11] == d)]
 
         ids = np.int32(arrived[:,0]) # find unique IDs of arrived persons
         
         #check if there are those out of bounds
         #replace x oob
         #where x larger than destination + wander, AND heading wrong way, set heading negative
-        shp = arrived[:,3][arrived[:,1] > (dest_x + (arrived[:,13] * wander_factor))].shape
 
-        arrived[:,3][arrived[:,1] > (dest_x + (arrived[:,13] * wander_factor))] = -np.random.normal(loc = 0.5,
-                                                                scale = 0.5 / 3,
-                                                                size = shp)
+        #out of bounds
+        #define bounds arrays, excluding those who are marked as having a custom destination
+        i_xlower = destination_bounds[0]; i_xupper = destination_bounds[2]
+        i_ylower = destination_bounds[1]; i_yupper = destination_bounds[3]
 
+        buffer = 0.0
+        _xbounds = np.array([[i_xlower + buffer, i_xupper - buffer]] * len(arrived))
+        _ybounds = np.array([[i_ylower + buffer, i_yupper - buffer]] * len(arrived))
 
-        #where x smaller than destination - wander, set heading positive
-        shp = arrived[:,3][arrived[:,1] < (dest_x - (arrived[:,13] * wander_factor))].shape
-        arrived[:,3][arrived[:,1] < (dest_x - (arrived[:,13] * wander_factor))] = np.random.normal(loc = 0.5,
-                                                            scale = 0.5 / 3,
-                                                            size = shp)
-        #where y larger than destination + wander, set heading negative
-        shp = arrived[:,4][arrived[:,2] > (dest_y + (arrived[:,14] * wander_factor))].shape
-        arrived[:,4][arrived[:,2] > (dest_y + (arrived[:,14] * wander_factor))] = -np.random.normal(loc = 0.5,
-                                                                scale = 0.5 / 3,
-                                                                size = shp)
-        #where y smaller than destination - wander, set heading positive
-        shp = arrived[:,4][arrived[:,2] < (dest_y - (arrived[:,14] * wander_factor))].shape
-        arrived[:,4][arrived[:,2] < (dest_y - (arrived[:,14] * wander_factor))] = np.random.normal(loc = 0.5,
-                                                            scale = 0.5 / 3,
-                                                            size = shp)
-
-        #slow speed
-        arrived[:,5] = np.random.normal(loc = 0.005,
-                                        scale = 0.005 / 3, 
-                                        size = arrived[:,5].shape)
+        arrived = update_wall_forces(arrived, _xbounds, _ybounds)
 
         #reinsert into population
         population[(population[:,12] == 1) &
-                    (population[:,11] == d)] = arrived
+                   (population[:,11] == d)] = arrived
                                 
     return population
 

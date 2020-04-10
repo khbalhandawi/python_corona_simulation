@@ -21,6 +21,7 @@ from visualiser import build_fig, draw_tstep, set_style, build_fig_SIRonly, draw
 #np.random.seed(100)
 
 class Simulation():
+
     #TODO: if lockdown or otherwise stopped: destination -1 means no motion
     def __init__(self, *args, **kwargs):
         #load default config data
@@ -30,22 +31,20 @@ class Simulation():
         self.last_step_change = 0
         self.above_act_thresh = False
         self.above_deact_thresh = False
-
-        #initialize default population
-        self.population_init()
-
-        self.pop_tracker = Population_trackers()
-
-        #initalise destinations vector
-        self.destinations = initialize_destination_matrix(self.Config.pop_size, 1)
         #set_style(self.Config)
-
 
     def population_init(self):
         '''(re-)initializes population'''
         self.population = initialize_population(self.Config, self.Config.mean_age, 
                                                 self.Config.max_age, self.Config.xbounds, 
                                                 self.Config.ybounds)
+
+    def initialize_simulation(self):
+        #initialize default population
+        self.population_init()
+        self.pop_tracker = Population_trackers()
+        #initalise destinations vector
+        self.destinations = initialize_destination_matrix(self.Config.pop_size, 1)
 
     def tstep(self):
         '''
@@ -58,28 +57,29 @@ class Simulation():
 
         if active_dests > 0 and len(self.population[self.population[:,12] == 0]) > 0:
             self.population = set_destination(self.population, self.destinations)
-            self.population = check_at_destination(self.population, self.destinations, 
-                                                   wander_factor = self.Config.wander_factor_dest,
-                                                   speed = self.Config.speed)
+            self.population = check_at_destination(self.population, self.destinations,
+                                                   wander_factor = self.Config.wander_factor_dest)
 
         if active_dests > 0 and len(self.population[self.population[:,12] == 1]) > 0:
             #keep them at destination
             self.population = keep_at_destination(self.population, self.destinations,
+                                                  self.Config.isolation_bounds,
                                                   self.Config.wander_factor)
         
         #gravity wells
-        [self.population, self.last_step_change] = update_gravity_forces(self.population, 
-                            self.Config.wander_step_size, self.time, self.Config.gravity_strength, 
-                            self.Config.wander_step_duration, self.last_step_change)
+        if self.Config.gravity_strength > 0:
+            [self.population, self.last_step_change] = update_gravity_forces(self.population, 
+                                self.Config.wander_step_size, self.time, self.Config.gravity_strength, 
+                                self.Config.wander_step_duration, self.last_step_change)
         
-        #activate social distancing only for compliant individuals
-
+        #activate social distancing above a certain infection threshold
         if not self.above_act_thresh and self.Config.social_distance_threshold_on > 0:
             # If not previously above infection threshold activate when threshold reached
             self.above_act_thresh = sum(self.population[:,6] == 1) >= self.Config.social_distance_threshold_on
         elif self.Config.social_distance_threshold_on == 0:
             self.above_act_thresh = True
 
+        #deactivate social distancing after infection drops below threshold after using social distancing
         if self.above_act_thresh and not self.above_deact_thresh and self.Config.social_distance_threshold_off > 0:
             # If previously went above infection threshold deactivate when threshold reached
             self.above_deact_thresh = sum(self.population[:,6] == 1) <= \
@@ -87,8 +87,11 @@ class Simulation():
 
         act_social_distancing = self.above_act_thresh and not self.above_deact_thresh
 
+        #activate social distancing only for compliant individuals
         if self.Config.social_distance_factor > 0 and act_social_distancing:
-            self.population[self.population[:,17] == 0] = update_repulsive_forces(self.population[self.population[:,17] == 0], self.Config.social_distance_factor)
+            self.population[(self.population[:,17] == 0) &\
+                            (self.population[:,11] == 0)] = update_repulsive_forces(self.population[(self.population[:,17] == 0) &\
+                                                                                                    (self.population[:,11] == 0)], self.Config.social_distance_factor)
 
         #out of bounds
         #define bounds arrays, excluding those who are marked as having a custom destination
@@ -101,7 +104,9 @@ class Simulation():
                                                                                  _xbounds, _ybounds)
 
         #update velocities
-        self.population = update_velocities(self.population,self.Config)
+        self.population[(self.population[:,11] == 0) |\
+                        (self.population[:,12] == 1)] = update_velocities(self.population[(self.population[:,11] == 0) |\
+                                                                                          (self.population[:,12] == 1)],self.Config)
 
         #for dead ones: set velocity and social distancing to 0 for dead ones
         self.population[:,3:5][self.population[:,6] == 3] = 0
@@ -231,7 +236,7 @@ if __name__ == '__main__':
     # sim.Config.plot_style = 'default' #can also be dark
     # sim.Config.plot_text_style = 'default' #can also be LaTeX
     # sim.Config.visualise = True
-    # sim.Config.visualise_every_n_frame = 10
+    # sim.Config.visualise_every_n_frame = 1
     # sim.Config.plot_last_tstep = True
     # sim.Config.verbose = False
     # sim.Config.save_plot = False
@@ -245,7 +250,7 @@ if __name__ == '__main__':
     sim.Config.speed = 0.15
     sim.Config.max_speed = 0.3
     sim.Config.dt = 0.01
-    # sim.Config.social_distance_factor = 0.0 # run 0
+    sim.Config.social_distance_factor = 0.0 # run 0
 
     # sim.Config.social_distance_factor = 0.0001 * 0.2 # run 1
 
@@ -258,15 +263,20 @@ if __name__ == '__main__':
     # sim.Config.social_distance_factor = 0.0001 * 0.3 # run 5
     # sim.Config.social_distance_violation = 20 # number of people # run 5
 
-    sim.Config.social_distance_factor = 0.0001 * 0.3 # run 6
-    sim.Config.social_distance_threshold_on = 20 # number of people # run 6
-    sim.Config.social_distance_threshold_off = 5 # number of people # run 6
+    # sim.Config.social_distance_factor = 0.0001 * 0.3 # run 6
+    # sim.Config.social_distance_threshold_on = 20 # number of people # run 6
+    # sim.Config.social_distance_threshold_off = 5 # number of people # run 6
 
     sim.Config.wander_step_size = 0.00
     sim.Config.gravity_strength = 1
     sim.Config.wander_step_duration = sim.Config.dt * 10
 
-    sim.population_init()
+    #set self-isolation scenario
+    sim.Config.wander_factor = 0.05
+    sim.Config.set_self_isolation(self_isolate_proportion = 0.9,
+                                 isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
+                                 traveling_infects=False)
+
     #set colorblind mode if needed
     #sim.Config.colorblind_mode = True
     #set colorblind type (default deuteranopia)
@@ -279,11 +289,6 @@ if __name__ == '__main__':
     #set lockdown scenario
     # sim.Config.set_lockdown(lockdown_percentage = 0.1, lockdown_compliance = 0.95)
 
-    #set self-isolation scenario
-    #sim.Config.set_self_isolation(self_isolate_proportion = 0.9,
-    #                              isolation_bounds = [0.02, 0.02, 0.09, 0.98],
-    #                              traveling_infects=False)
-    #sim.population_init() #reinitialize population to enforce new roaming bounds
-
+    sim.initialize_simulation()
     #run, hold CTRL+C in terminal to end scenario early
     sim.run()
