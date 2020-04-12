@@ -26,11 +26,6 @@ class Simulation():
     def __init__(self, *args, **kwargs):
         #load default config data
         self.Config = Configuration()
-        self.frame = 0
-        self.time = 0
-        self.last_step_change = 0
-        self.above_act_thresh = False
-        self.above_deact_thresh = False
         #set_style(self.Config)
 
     def population_init(self):
@@ -40,9 +35,15 @@ class Simulation():
                                                 self.Config.ybounds)
 
     def initialize_simulation(self):
+        #initialize times
+        self.frame = 0
+        self.time = 0
+        self.last_step_change = 0
+        self.above_act_thresh = False
+        self.above_deact_thresh = False
         #initialize default population
         self.population_init()
-        self.pop_tracker = Population_trackers()
+        self.pop_tracker = Population_trackers(self.Config)
         #initalise destinations vector
         self.destinations = initialize_destination_matrix(self.Config.pop_size, 1)
 
@@ -189,7 +190,7 @@ class Simulation():
         
         while i < self.Config.simulation_steps:
             try:
-                sim.tstep()
+                self.tstep()
             except KeyboardInterrupt:
                 print('\nCTRL-C caught, exiting')
                 sys.exit(1)
@@ -212,15 +213,16 @@ class Simulation():
             save_data(self.population, self.pop_tracker)
 
         #report outcomes
-        print('\n-----stopping-----\n')
-        print('total timesteps taken: %i' %self.frame)
-        print('total dead: %i' %len(self.population[self.population[:,6] == 3]))
-        print('total recovered: %i' %len(self.population[self.population[:,6] == 2]))
-        print('total infected: %i' %len(self.population[self.population[:,6] == 1]))
-        print('total infectious: %i' %len(self.population[(self.population[:,6] == 1) |
-                                                          (self.population[:,6] == 4)]))
-        print('total unaffected: %i' %len(self.population[self.population[:,6] == 0]))
-
+        if self.Config.verbose:
+            print('\n-----stopping-----\n')
+            print('total timesteps taken: %i' %self.frame)
+            print('total dead: %i' %len(self.population[self.population[:,6] == 3]))
+            print('total recovered: %i' %len(self.population[self.population[:,6] == 2]))
+            print('total infected: %i' %len(self.population[self.population[:,6] == 1]))
+            print('total infectious: %i' %len(self.population[(self.population[:,6] == 1) |
+                                                            (self.population[:,6] == 4)]))
+            print('total unaffected: %i' %len(self.population[self.population[:,6] == 0]))
+            print('mean distance travelled: %f' %np.mean(self.pop_tracker.distance_travelled))
 
 if __name__ == '__main__':
 
@@ -232,21 +234,22 @@ if __name__ == '__main__':
     sim.Config.pop_size = 600
 
     #set visuals
-    sim.Config.plot_style = 'dark' #can also be dark
-    sim.Config.plot_text_style = 'LaTeX' #can also be LaTeX
-    sim.Config.visualise = True
-    sim.Config.visualise_every_n_frame = 1
-    sim.Config.plot_last_tstep = True
-    sim.Config.verbose = False
-    sim.Config.save_plot = True
-
-    # sim.Config.plot_style = 'default' #can also be dark
-    # sim.Config.plot_text_style = 'default' #can also be LaTeX
+    # sim.Config.plot_style = 'dark' #can also be dark
+    # sim.Config.plot_text_style = 'LaTeX' #can also be LaTeX
     # sim.Config.visualise = True
     # sim.Config.visualise_every_n_frame = 1
     # sim.Config.plot_last_tstep = True
     # sim.Config.verbose = False
-    # sim.Config.save_plot = False
+    # sim.Config.save_plot = True
+
+    sim.Config.plot_style = 'default' #can also be dark
+    sim.Config.plot_text_style = 'default' #can also be LaTeX
+    sim.Config.visualise = False
+    sim.Config.visualise_every_n_frame = 1
+    sim.Config.plot_last_tstep = True
+    sim.Config.verbose = False
+    sim.Config.save_plot = True
+    sim.Config.save_data = True
 
     #set infection parameters
     sim.Config.infection_chance = 0.3

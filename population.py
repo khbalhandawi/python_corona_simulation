@@ -191,7 +191,7 @@ def save_data(population, pop_tracker):
     np.save('data/%i/infected.npy' %num_files, pop_tracker.infectious)
     np.save('data/%i/recovered.npy' %num_files, pop_tracker.recovered)
     np.save('data/%i/fatalities.npy' %num_files, pop_tracker.fatalities)
-
+    np.save('data/%i/mean_distance.npy' %num_files, pop_tracker.distance_travelled)
 
 def save_population(population, tstep=0, folder='data_tstep'):
     '''dumps population data at given timestep to disk
@@ -220,11 +220,14 @@ class Population_trackers():
 
     TODO: track age cohorts here as well
     '''
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.susceptible = []
         self.infectious = []
         self.recovered = []
         self.fatalities = []
+        self.distance_travelled = []
+        self.Config = args[0]
+        self.total_distance = np.zeros(self.Config.pop_size) # distance travelled by individuals
 
         #PLACEHOLDER - whether recovered individual can be reinfected
         self.reinfect = False 
@@ -236,6 +239,12 @@ class Population_trackers():
         self.infectious.append(len(population[population[:,6] == 1]))
         self.recovered.append(len(population[population[:,6] == 2]))
         self.fatalities.append(len(population[population[:,6] == 3]))
+
+        # Popoulation speed
+        speed_vector = population[:,3:5][population[:,11] == 0] # speed of individuals within world
+        distance_individuals = np.linalg.norm( speed_vector ,axis = 1) * self.Config.dt # current distance travelled 
+        self.total_distance[population[:,11] == 0] += distance_individuals # cumilative distance travelled
+        self.distance_travelled.append(np.mean(self.total_distance)) # mean cumilative distance
 
         if self.reinfect:
             self.susceptible.append(pop_size - (self.infectious[-1] +

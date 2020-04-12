@@ -134,3 +134,6 @@ data/plot_helper.ipynb
 *.gif
 *.avi
 *.mp4
+*.npy
+*.npy
+*.pkl
