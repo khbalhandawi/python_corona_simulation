@@ -5,6 +5,7 @@ and related computations
 
 import numpy as np
 import scipy.spatial.distance as cd
+from utils import pairwise_dist, pairwise_comp
 from random import gauss
 
 def update_positions(population, dt = 0.01):
@@ -128,12 +129,6 @@ def update_wall_forces(population, xbounds, ybounds, wall_buffer = 0.01, bounce_
     # Update forces
     return population
 
-
-def pairwise_comp(A): # Using NumPy broadcasting    
-    a = np.asarray(A) # Convert to array if not already so
-    mask = a - a[:,None]
-    return mask
-
 def update_repulsive_forces(population, social_distance_factor):
 
     '''calculated repulsive forces between individuals
@@ -153,13 +148,14 @@ def update_repulsive_forces(population, social_distance_factor):
     y = population[:,2]
     
     dist = cd.cdist(population[:,1:3],population[:,1:3])
+    # dist = pairwise_dist(population[:,1:3])
     dist += np.eye(len(population[:,1]))
 
     to_point_x = pairwise_comp(x)
     to_point_y = pairwise_comp(y)
 
-    repulsion_force_x = - social_distance_factor * np.sum( (to_point_x) / (dist**5.0) , axis = 1)
-    repulsion_force_y = - social_distance_factor * np.sum( (to_point_y) / (dist**5.0) , axis = 1)
+    repulsion_force_x = - social_distance_factor * np.sum( (to_point_x) / (dist**5) , axis = 1)
+    repulsion_force_y = - social_distance_factor * np.sum( (to_point_y) / (dist**5) , axis = 1)
 
     population[:,15] += repulsion_force_x
     population[:,16] += repulsion_force_y

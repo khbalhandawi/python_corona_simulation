@@ -244,15 +244,15 @@ if __name__ == '__main__':
 
     sim.Config.plot_style = 'default' #can also be dark
     sim.Config.plot_text_style = 'default' #can also be LaTeX
-    sim.Config.visualise = False
-    sim.Config.visualise_every_n_frame = 1
+    sim.Config.visualise = True
+    sim.Config.visualise_every_n_frame = 50
     sim.Config.plot_last_tstep = True
     sim.Config.verbose = False
-    sim.Config.save_plot = True
-    sim.Config.save_data = True
+    sim.Config.save_plot = False
+    sim.Config.save_data = False
 
     #set infection parameters
-    sim.Config.infection_chance = 0.3
+    sim.Config.infection_chance = 0.1
     sim.Config.infection_range = 0.03
     sim.Config.mortality_chance = 0.09 #global baseline chance of dying from the disease
 
@@ -285,9 +285,9 @@ if __name__ == '__main__':
     # sim.Config.social_distance_violation = 20 # number of people
 
     # run 6 (social distancing with second wave)
-    # sim.Config.social_distance_factor = 0.0001 * 0.3
-    # sim.Config.social_distance_threshold_on = 20 # number of people
-    # sim.Config.social_distance_threshold_off = 5 # number of people
+    sim.Config.social_distance_factor = 0.0001 * 0.3
+    sim.Config.social_distance_threshold_on = 20 # number of people
+    sim.Config.social_distance_threshold_off = 0 # number of people
 
     # run 7 (self-isolation scenario)
     # sim.Config.wander_factor_dest = 0.1
@@ -315,15 +315,15 @@ if __name__ == '__main__':
     #                              traveling_infects=False)
 
     # run 10 (self-isolation scenario with social distancing after threshold, violators and a 2nd wave)
-    sim.Config.social_distance_factor = 0.0001 * 0.3
-    sim.Config.social_distance_violation = 20 # number of people
-    sim.Config.social_distance_threshold_on = 20 # number of people
-    sim.Config.social_distance_threshold_off = 2 # number of people
+    # sim.Config.social_distance_factor = 0.0001 * 0.3
+    # sim.Config.social_distance_violation = 20 # number of people
+    # sim.Config.social_distance_threshold_on = 20 # number of people
+    # sim.Config.social_distance_threshold_off = 2 # number of people
 
-    sim.Config.wander_factor_dest = 0.1
-    sim.Config.set_self_isolation(self_isolate_proportion = 0.8,
-                                 isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
-                                 traveling_infects=False)
+    # sim.Config.wander_factor_dest = 0.1
+    # sim.Config.set_self_isolation(self_isolate_proportion = 0.8,
+    #                              isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
+    #                              traveling_infects=False)
 
     #set colorblind mode if needed
     #sim.Config.colorblind_mode = True
