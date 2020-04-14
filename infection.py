@@ -4,6 +4,7 @@ new infections, recoveries, and deaths
 '''
 
 import numpy as np
+import random
 from path_planning import go_to_location
 
 
@@ -122,6 +123,10 @@ def infect(population, Config, frame, send_to_location=False,
 
     new_infections = []
 
+    # randomly pick individuals for testing
+    test_indices = np.int32(random.sample(list(population[:,0][population[:,11] == 0]), 
+                    k=min(Config.number_of_tests, len(list(population[:,0][population[:,11] == 0])))))
+
     #if less than half are infected, slice based on infected (to speed up computation)
     if len(infected_previous_step) < (Config.pop_size // 2):
         for patient in infected_previous_step:
@@ -140,18 +145,21 @@ def infect(population, Config, frame, send_to_location=False,
                 if np.random.random() < Config.infection_chance:
                     population[idx][6] = 1
                     population[idx][8] = frame
-                    if len(population[population[:,10] == 1]) <= Config.healthcare_capacity:
+
+                    if len(population[population[:,10] == 1]) <= Config.healthcare_capacity and idx in test_indices:
                         population[idx][10] = 1
                         if send_to_location:
                             #send to location if die roll is positive
                             if np.random.uniform() <= location_odds:
                                 population[idx],\
                                 destinations[idx] = go_to_location(population[idx],
-                                                                   destinations[idx],
-                                                                   location_bounds, 
-                                                                   dest_no=location_no)
+                                                                    destinations[idx],
+                                                                    location_bounds, 
+                                                                    dest_no=location_no)
                         else:
                             pass
+
+
                     new_infections.append(idx)
 
     else:
@@ -181,7 +189,8 @@ def infect(population, Config, frame, send_to_location=False,
                         #roll die to see if healthy person will be infected
                         population[np.int32(person[0])][6] = 1
                         population[np.int32(person[0])][8] = frame
-                        if len(population[population[:,10] == 1]) <= Config.healthcare_capacity:
+                        
+                        if len(population[population[:,10] == 1]) <= Config.healthcare_capacity and np.int32(person[0]) in test_indices:
                             population[np.int32(person[0])][10] = 1
                             if send_to_location:
                                 #send to location and add to treatment if die roll is positive

@@ -100,6 +100,7 @@ class Configuration():
         #self isolation variables
         self.self_isolate_proportion = 0.6
         self.isolation_bounds = [0.02, 0.02, 0.1, 0.98]
+        self.number_of_tests = 10
         
         #lockdown variables
         self.lockdown_percentage = 0.1 
@@ -164,7 +165,7 @@ class Configuration():
         self.lockdown_vector[np.random.uniform(size=(self.pop_size,)) >= lockdown_compliance] = 1
 
 
-    def set_self_isolation(self, self_isolate_proportion=0.9,
+    def set_self_isolation(self, number_of_tests, self_isolate_proportion=0.9,
                            isolation_bounds = [-0.28, 0.02, -0.02, 0.28],
                            traveling_infects=False):
         '''sets self-isolation scenario to active'''
@@ -172,6 +173,7 @@ class Configuration():
         self.self_isolate = True
         self.isolation_bounds = isolation_bounds
         self.self_isolate_proportion = self_isolate_proportion
+        self.number_of_tests = number_of_tests
         #set roaming bounds to outside isolated area
         self.xbounds = [0.02, 0.98]
         self.ybounds = [0.02, 0.98]

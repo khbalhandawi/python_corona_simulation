@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as mlines #for legend actors
 import matplotlib.patches as patches #for boundaries
 import matplotlib as mpl
+# from matplotlib.transforms import TransformedBbox, Affine2D
 import numpy as np
 
 from environment import build_hospital
@@ -89,9 +90,13 @@ def build_fig(Config, figsize=(10,5)):
     handles, labels = [[a1,a2,a3,a4,a5], ['healthcare capacity','infectious','healthy','recovered','dead']]
     fig.legend(handles, labels, loc='upper center', ncol=5, fontsize = 10)
 
+    # Get tight figure bbox
+    tight_bbox_raw = fig.get_tightbbox(fig.canvas.get_renderer())
+    # tight_bbox = TransformedBbox(tight_bbox_raw, Affine2D().scale(1./fig.dpi))
+
     #if 
 
-    return fig, spec, ax1, ax2
+    return fig, spec, ax1, ax2, tight_bbox_raw
 
 def build_fig_SIRonly(Config, figsize=(5,4)):
     set_style(Config)
@@ -127,7 +132,7 @@ def build_fig_SIRonly(Config, figsize=(5,4)):
     return fig, spec, ax1
 
 def draw_tstep(Config, population, pop_tracker, frame,
-               fig, spec, ax1, ax2):
+               fig, spec, ax1, ax2, tight_bbox = None):
     #construct plot and visualise
 
     #set plot style
@@ -147,16 +152,16 @@ def draw_tstep(Config, population, pop_tracker, frame,
         
     #plot population segments
     healthy = population[population[:,6] == 0][:,1:3]
-    ax1.scatter(healthy[:,0], healthy[:,1], color=palette[0], s = 20, label='healthy')
+    ax1.scatter(healthy[:,0], healthy[:,1], color=palette[0], s = 15, label='healthy')
     
     infected = population[population[:,6] == 1][:,1:3]
-    ax1.scatter(infected[:,0], infected[:,1], color=palette[1], s = 20, label='infected')
+    ax1.scatter(infected[:,0], infected[:,1], color=palette[1], s = 15, label='infected')
 
     immune = population[population[:,6] == 2][:,1:3]
-    ax1.scatter(immune[:,0], immune[:,1], color=palette[2], s = 20, label='immune')
+    ax1.scatter(immune[:,0], immune[:,1], color=palette[2], s = 15, label='immune')
     
     fatalities = population[population[:,6] == 3][:,1:3]
-    ax1.scatter(fatalities[:,0], fatalities[:,1], color=palette[3], s = 20, label='dead')
+    ax1.scatter(fatalities[:,0], fatalities[:,1], color=palette[3], s = 15, label='dead')
         
     
     #add text descriptors
@@ -212,10 +217,10 @@ def draw_tstep(Config, population, pop_tracker, frame,
             bg_color = "#121111"
 
         try:
-            fig.savefig('%s/%i.png' %(Config.plot_path, frame), dpi=300, facecolor=bg_color)
+            fig.savefig('%s/%i.png' %(Config.plot_path, frame), dpi=300, facecolor=bg_color, bbox_inches=tight_bbox)
         except:
             check_folder(Config.plot_path)
-            fig.savefig('%s/%i.png' %(Config.plot_path, frame), dpi=300, facecolor=bg_color)
+            fig.savefig('%s/%i.png' %(Config.plot_path, frame), dpi=300, facecolor=bg_color, bbox_inches=tight_bbox)
 
 def draw_SIRonly(Config, population, pop_tracker, frame,
                fig, spec, ax1):
@@ -270,7 +275,7 @@ def draw_SIRonly(Config, population, pop_tracker, frame,
             bg_color = "#121111"
 
         try:
-            fig.savefig('%s/Final_%i.pdf' %(Config.plot_path, frame), dpi=1000, facecolor=bg_color)
+            fig.savefig('%s/Final_%i.pdf' %(Config.plot_path, frame), dpi=1000, facecolor=bg_color, bbox_inches='tight')
         except:
             check_folder(Config.plot_path)
-            fig.savefig('%s/Final_%i.pdf' %(Config.plot_path, frame), dpi=1000, facecolor=bg_color)
+            fig.savefig('%s/Final_%i.pdf' %(Config.plot_path, frame), dpi=1000, facecolor=bg_color, bbox_inches='tight')

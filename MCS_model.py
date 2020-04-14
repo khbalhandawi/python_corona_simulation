@@ -1,4 +1,5 @@
 from simulation import Simulation
+from utils import check_folder
 import numpy as np
 import scipy.stats as st
 import statsmodels as sm
@@ -33,7 +34,7 @@ def parallel_sampling(sim_object,n_samples,log_file):
         
         resultsfile=open(log_file,'a+')
         resultsfile.write(str(i)+','+str(sim.Config.social_distance_factor / 0.0001)+','+str(sim.Config.social_distance_threshold_on)+','
-                        +str(sim.Config.social_distance_violation)+','+str(sim.Config.self_isolate_proportion)+','
+                        +str(sim.Config.social_distance_violation)+','+str(sim.Config.number_of_tests)+','
                         +str(infected)+','+str(fatalities)+','+str(mean_distance)+','+str(sim.frame)+'\n')
         resultsfile.close()
 
@@ -175,57 +176,106 @@ def make_pdf(dist, params, size=10000):
 
     return pdf
 
-def plot_distribution(data, fun_name, label_name, run):
+def plot_distribution(data, fun_name, label_name, n_bins, run, 
+                      discrete = False, min_bin_width = 0, 
+                      fig_swept = None, run_label = 'PDF', color = u'b',
+                      dataXLim = None, dataYLim = None):
 
     # Plot raw data
     fig0 = plt.figure(figsize=(6,5))
-    plt.hist(data, bins = 'auto', alpha=0.5, density=True)
-    ax = plt.gca()
-    # Save plot limits
-    dataYLim = ax.get_ylim()
+
+    if discrete:
+        # discrete bin numbers
+        d = max(min(np.diff(np.unique(np.asarray(data)))), min_bin_width)
+        left_of_first_bin = min(data) - float(d)/2
+        right_of_last_bin = max(data) + float(d)/2
+        bins = np.arange(left_of_first_bin, right_of_last_bin + d, d)
+
+        plt.hist(data, bins, alpha=0.5, density=True)
+    else:
+        plt.hist(data, bins = n_bins, alpha=0.5, density=True)
+
+    ax = fig0.gca()
 
     # Update plots
-    ax.set_ylim(dataYLim)
+    ax.set_ylim(ax.get_ylim())
     ax.set_xlabel(label_name)
     ax.set_ylabel('Frequency')
 
     # Plot for comparison
     fig1 = plt.figure(figsize=(6,5))
-    plt.hist(data, bins = 'auto', alpha=0.5, density=True)
-    ax = plt.gca()
-    # Save plot limits
-    dataYLim = ax.get_ylim()
 
-    # Find best fit distribution
-    best_fit_name, best_fit_params, best_10_fits = best_fit_distribution(data, 200, ax)
+    if discrete:
+        # discrete bin numbers
+        plt.hist(data, bins, alpha=0.5, density=True)
+    else:
+        plt.hist(data, bins = n_bins, alpha=0.5, density=True)
+    
+    ax = fig1.gca()
 
-    best_dist = getattr(st, best_fit_name)
-    print('Best fit: %s' %(best_fit_name.upper()) )
     # Update plots
-    ax.set_ylim(dataYLim)
+    ax.set_ylim(ax.get_ylim())
     ax.set_xlabel(label_name)
     ax.set_ylabel('Frequency')
 
+    # Display
+    if fig_swept is None:
+        fig2 = plt.figure(figsize=(6,5))
+    else:
+        fig2 = fig_swept
+    
+    ax2 = fig2.gca()
+
+    if discrete:
+        data_bins = bins
+    else:
+        data_bins = n_bins
+
+    best_fit_name, best_fit_params, best_10_fits = best_fit_distribution(data, data_bins, ax)
+
+    best_dist = getattr(st, best_fit_name)
+    print('Best fit: %s' %(best_fit_name.upper()) )
     # Make PDF with best params 
     pdf = make_pdf(best_dist, best_fit_params)
-    # Display
-    fig2 = plt.figure(figsize=(6,5))
-    ax = pdf.plot(lw=2, label='PDF', legend=True)
-    plt.hist(data, bins = 'auto', alpha=0.5, label='Data', density=True)
+    pdf.plot(lw=2, color = color, label=run_label, legend=True, ax=ax2)
 
     param_names = (best_dist.shapes + ', loc, scale').split(', ') if best_dist.shapes else ['loc', 'scale']
     param_str = ', '.join(['{}={:0.2f}'.format(k,v) for k,v in zip(param_names, best_fit_params)])
     dist_str = '{}({})'.format(best_fit_name, param_str)
 
-    ax.set_xlabel(label_name)
-    ax.set_ylabel('Frequency')
+    if discrete:
+        # discrete bin numbers
+        ax2.hist(data, bins, color = color, alpha=0.5, label = 'data', density=True)
+    else:
+        ax2.hist(data, bins = n_bins, color = color, alpha=0.5, label = 'data', density=True)
+    
+    # Save plot limits
+    if dataYLim is None and dataXLim is None:
+        dataYLim = ax2.get_ylim()
+        dataXLim = ax2.get_xlim()
+    else:
+        # Update plots
+        ax2.set_xlim(dataXLim)
+        ax2.set_ylim(dataYLim)
+
+    ax2.tick_params(axis='both', which='major', labelsize=14) 
+    ax2.set_xlabel(label_name, fontsize=14)
+    ax2.set_ylabel('Probability density', fontsize=14)
 
     fig0.savefig('data/RAW_%s_r%i.pdf' %(fun_name,run), 
         format='pdf', dpi=100,bbox_inches='tight')
-    fig2.savefig('data/PDF_%s_r%i.pdf' %(fun_name,run), 
-            format='pdf', dpi=100,bbox_inches='tight')
+    
+    if fig_swept is None:
+        fig2.savefig('data/PDF_%s_r%i.pdf' %(fun_name,run), 
+                format='pdf', dpi=100,bbox_inches='tight')
 
-    plt.close('all')
+    if fig_swept is None:    
+        plt.close('all')
+    else:
+        plt.close(fig0)
+        plt.close(fig1)
+    
+    return dataXLim, dataYLim
 
 if __name__ == '__main__':
 
@@ -269,52 +319,132 @@ if __name__ == '__main__':
     sim.Config.wander_step_duration = sim.Config.dt * 10
 
     run = 0
-    n_samples = 2000
-    new_run = True
 
+    n_samples = 1000
+    n_bins = 30 # for continuous distributions
+    min_bin_width_i = 15 # for discrete distributions
+    min_bin_width_f = 5 # for discrete distributions
+
+    # n_samples = 200
+    # n_bins = 30 # for continuous distributions
+    # min_bin_width_i = 15 # for discrete distributions
+    # min_bin_width_f = 5 # for discrete distributions
+
+    new_run = False
+
+    n_violators_sweep = np.arange(5, 30, 5)
     SD_factors = np.linspace(0.05,0.3,5)
+    test_capacities = np.arange(450, 600, 30)
 
+    same_axis = True
+    if same_axis:
+        fig_infections = plt.figure(figsize=(10,5))
+        fig_fatalities = plt.figure(figsize=(10,5))
+        fig_dist = plt.figure(figsize=(10,5))
+    else:
+        fig_infections = fig_fatalities = fig_dist = None
+
+    auto_limits = False
+    if auto_limits:
+        dataXLim_i = dataYLim_i = None
+        dataXLim_f = dataYLim_f = None
+        dataXLim_d = dataYLim_d = None
+    else:
+        with open('data/MCS_data_limits.pkl','rb') as fid:
+            dataXLim_i = pickle.load(fid)
+            dataYLim_i = pickle.load(fid)
+            dataXLim_f = pickle.load(fid)
+            dataYLim_f = pickle.load(fid)
+            dataXLim_d = pickle.load(fid)
+            dataYLim_d = pickle.load(fid)
+
+    mpl.rc('text', usetex = True)
+    mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}',
+                                            r'\usepackage{amssymb}']
+    mpl.rcParams['font.family'] = 'serif'
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color'] # ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', ...]
+
+    # for n_violators in n_violators_sweep:
+    # for test_capacity in test_capacities:
     for SD in SD_factors:
 
+        # legend_label = 'Number of violators = %i people' %(n_violators)
+        # legend_label = 'Testing capacity = %i people' %(test_capacity)
+        legend_label = 'Social distancing factor = %f' %(SD)
+
         if new_run:
-            sim.Config.social_distance_factor = 0.0001 * 0.0
+            sim.Config.social_distance_factor = 0.0001 * 0.3
             sim.Config.social_distance_threshold_on = 20 # number of people
             sim.Config.social_distance_threshold_off = 0 # number of people
+            sim.Config.social_distance_violation = n_violators # number of people
 
+            sim.Config.healthcare_capacity = 600
+            # sim.Config.wander_factor_dest = 0.1
+            # sim.Config.set_self_isolation(number_of_tests = test_capacity, self_isolate_proportion = 1.0,
+            #                               isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
+            #                               traveling_infects=False)
+
+            check_folder('data/')
             log_file = 'data/MCS_data_r%i.log' %run
             [infected_i,fatalities_i,distance_i] = parallel_sampling(sim,n_samples,log_file)
 
-            with open('data/MCS_data_r%i.log' %run,'wb') as fid:
+            with open('data/MCS_data_r%i.pkl' %run,'wb') as fid:
                 pickle.dump(infected_i,fid)
                 pickle.dump(fatalities_i,fid)
                 pickle.dump(distance_i,fid)
         else:
-            with open('data/MCS_data_r%i.log' %run,'rb') as fid:
+            with open('data/MCS_data_r%i.pkl' %run,'rb') as fid:
                 infected_i = pickle.load(fid)
                 fatalities_i = pickle.load(fid)
                 distance_i = pickle.load(fid)
-
-        mpl.rc('text', usetex = True)
-        mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}',
-                                                r'\usepackage{amssymb}']
-        mpl.rcParams['font.family'] = 'serif'
 
         label_name = u'Maximum number of infected'
         fun_name = 'infections'
         data = infected_i
 
-        plot_distribution(data, fun_name, label_name, run)
+        dataXLim_i_out, dataYLim_i_out = plot_distribution(data, fun_name, label_name, n_bins, run, 
+            discrete = True, min_bin_width = min_bin_width_i, fig_swept = fig_infections, 
+            run_label = legend_label, color = colors[run], dataXLim = dataXLim_i, dataYLim = dataYLim_i)
 
         label_name = u'Number of fatalities'
         fun_name = 'fatalities'
         data = fatalities_i
 
-        plot_distribution(data, fun_name, label_name, run)
+        dataXLim_f_out, dataYLim_f_out = plot_distribution(data, fun_name, label_name, n_bins, run, 
+            discrete = True, min_bin_width = min_bin_width_f, fig_swept = fig_fatalities, 
+            run_label = legend_label, color = colors[run], dataXLim = dataXLim_f, dataYLim = dataYLim_f)
 
         label_name = u'Average cumilative distance travelled'
         fun_name = 'distance'
         data = distance_i
 
-        plot_distribution(data, fun_name, label_name, run)
-            
+        dataXLim_d_out, dataYLim_d_out = plot_distribution(data, fun_name, label_name, n_bins, run, 
+            fig_swept = fig_dist, run_label = legend_label, color = colors[run], 
+            dataXLim = dataXLim_d, dataYLim = dataYLim_d)
+        
+        if not auto_limits:
+            fig_infections.savefig('data/PDF_%s_r%i.pdf' %('infections',run), 
+                                    format='pdf', dpi=100,bbox_inches='tight')
+            fig_fatalities.savefig('data/PDF_%s_r%i.pdf' %('fatalities',run), 
+                                format='pdf', dpi=100,bbox_inches='tight')
+            fig_dist.savefig('data/PDF_%s_r%i.pdf' %('distance',run), 
+                            format='pdf', dpi=100,bbox_inches='tight')
+
         run += 1
+
+    with open('data/MCS_data_limits.pkl','wb') as fid:
+        pickle.dump(dataXLim_i_out,fid)
+        pickle.dump(dataYLim_i_out,fid)
+        pickle.dump(dataXLim_f_out,fid)
+        pickle.dump(dataYLim_f_out,fid)
+        pickle.dump(dataXLim_d_out,fid)
+        pickle.dump(dataYLim_d_out,fid)
+
+    if same_axis:
+        fig_infections.savefig('data/PDF_%s.pdf' %('infections'), 
+                                format='pdf', dpi=100,bbox_inches='tight')
+        fig_fatalities.savefig('data/PDF_%s.pdf' %('fatalities'), 
+                            format='pdf', dpi=100,bbox_inches='tight')
+        fig_dist.savefig('data/PDF_%s.pdf' %('distance'), 
+                        format='pdf', dpi=100,bbox_inches='tight')
+        plt.show()
