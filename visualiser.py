@@ -25,7 +25,6 @@ def set_style(Config):
                                                r'\usepackage{amssymb}']
         mpl.rcParams['font.family'] = 'serif'
 
-
 def build_fig(Config, figsize=(10,5)):
     set_style(Config)
 

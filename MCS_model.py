@@ -31,7 +31,8 @@ def parallel_sampling(sim_object,n_samples,log_file):
         infected = max(sim.pop_tracker.infectious)
         fatalities = sim.pop_tracker.fatalities[-1]
         mean_distance = sim.pop_tracker.distance_travelled[-1]
-        
+        mean_GC = sim.pop_tracker.mean_perentage_covered[-1]
+
         resultsfile=open(log_file,'a+')
         resultsfile.write(str(i)+','+str(sim.Config.social_distance_factor / 0.0001)+','+str(sim.Config.social_distance_threshold_on)+','
                         +str(sim.Config.social_distance_violation)+','+str(sim.Config.number_of_tests)+','
@@ -39,7 +40,7 @@ def parallel_sampling(sim_object,n_samples,log_file):
         resultsfile.close()
 
 
-        return [infected, fatalities, mean_distance]
+        return [infected, fatalities, mean_GC]
     
     num_cores = multiprocessing.cpu_count() - 2
         
@@ -65,12 +66,14 @@ def serial_sampling(sim_object,n_samples):
         sim_object.run()
                 
         infected = sim_object.pop_tracker.infectious
+        fatalities = sim.pop_tracker.fatalities
         mean_distance = sim_object.pop_tracker.distance_travelled
         
         infected_i += [max(infected)]
+        fatalities_i += [fatalities[-1]]
         distance_i += [mean_distance[-1]]
 
-    return infected_i, distance_i
+    return infected_i, fatalities_i, distance_i
 
 # Create models from data
 def best_fit_distribution(data, bins=200, ax=None):
@@ -285,6 +288,8 @@ if __name__ == '__main__':
     #set number of simulation steps
     sim.Config.simulation_steps = 20000
     sim.Config.pop_size = 600
+    sim.Config.n_gridpoints = 33
+    sim.Config.track_position = True
 
     #set visuals
     # sim.Config.plot_style = 'dark' #can also be dark
@@ -320,17 +325,17 @@ if __name__ == '__main__':
 
     run = 0
 
-    n_samples = 1000
-    n_bins = 30 # for continuous distributions
-    min_bin_width_i = 15 # for discrete distributions
-    min_bin_width_f = 5 # for discrete distributions
-
-    # n_samples = 200
+    # n_samples = 1000
     # n_bins = 30 # for continuous distributions
     # min_bin_width_i = 15 # for discrete distributions
     # min_bin_width_f = 5 # for discrete distributions
 
-    new_run = False
+    n_samples = 200
+    n_bins = 30 # for continuous distributions
+    min_bin_width_i = 15 # for discrete distributions
+    min_bin_width_f = 5 # for discrete distributions
+
+    new_run = True
 
     n_violators_sweep = np.arange(5, 30, 5)
     SD_factors = np.linspace(0.05,0.3,5)
@@ -373,10 +378,12 @@ if __name__ == '__main__':
         legend_label = 'Social distancing factor = %f' %(SD)
 
         if new_run:
-            sim.Config.social_distance_factor = 0.0001 * 0.3
-            sim.Config.social_distance_threshold_on = 20 # number of people
-            sim.Config.social_distance_threshold_off = 0 # number of people
-            sim.Config.social_distance_violation = n_violators # number of people
+            # sim.Config.social_distance_factor = 0.0001 * 0.3
+            # sim.Config.social_distance_threshold_on = 20 # number of people
+            # sim.Config.social_distance_threshold_off = 0 # number of people
+            # sim.Config.social_distance_violation = n_violators # number of people
+
+            sim.Config.social_distance_factor = 0.0001 * SD
 
             sim.Config.healthcare_capacity = 600
             # sim.Config.wander_factor_dest = 0.1

@@ -14,7 +14,8 @@ from motion import update_positions, update_velocities,update_wall_forces,\
 from path_planning import go_to_location, set_destination, check_at_destination,\
     keep_at_destination, reset_destinations
 from population import initialize_population, initialize_destination_matrix,\
-    set_destination_bounds, save_data, save_population, Population_trackers
+    set_destination_bounds, save_data, save_population, Population_trackers,\
+    initialize_ground_covered_matrix
 from visualiser import build_fig, draw_tstep, set_style, build_fig_SIRonly, draw_SIRonly
 
 #set seed for reproducibility
@@ -43,10 +44,14 @@ class Simulation():
         self.above_deact_thresh = False
         #initialize default population
         self.population_init()
-        self.pop_tracker = Population_trackers(self.Config)
         #initalise destinations vector
         self.destinations = initialize_destination_matrix(self.Config.pop_size, 1)
-
+        #initalise grid for tracking population positions
+        self.grid_coords, self.ground_covered = initialize_ground_covered_matrix(self.Config.pop_size, self.Config.n_gridpoints, 
+                                                                                 self.Config.xbounds, self.Config.ybounds)
+        #initalise population tracker
+        self.pop_tracker = Population_trackers(self.Config, self.grid_coords, self.ground_covered)
+        
     def tstep(self):
         '''
         takes a time step in the simulation
@@ -232,24 +237,26 @@ if __name__ == '__main__':
     #set number of simulation steps
     sim.Config.simulation_steps = 20000
     sim.Config.pop_size = 600
+    sim.Config.n_gridpoints = 33
+    sim.Config.track_position = True
 
     #set visuals
-    sim.Config.plot_style = 'default' #can also be dark
-    sim.Config.plot_text_style = 'LaTeX' #can also be LaTeX
-    sim.Config.visualise = True
-    sim.Config.visualise_every_n_frame = 1
-    sim.Config.plot_last_tstep = True
-    sim.Config.verbose = False
-    sim.Config.save_plot = True
-
     # sim.Config.plot_style = 'default' #can also be dark
     # sim.Config.plot_text_style = 'LaTeX' #can also be LaTeX
-    # sim.Config.visualise = False
-    # sim.Config.visualise_every_n_frame = 2
+    # sim.Config.visualise = True
+    # sim.Config.visualise_every_n_frame = 1
     # sim.Config.plot_last_tstep = True
     # sim.Config.verbose = False
     # sim.Config.save_plot = True
-    # sim.Config.save_data = False
+
+    sim.Config.plot_style = 'default' #can also be dark
+    sim.Config.plot_text_style = 'default' #can also be LaTeX
+    sim.Config.visualise = False
+    sim.Config.visualise_every_n_frame = 2
+    sim.Config.plot_last_tstep = True
+    sim.Config.verbose = True
+    sim.Config.save_plot = True
+    sim.Config.save_data = False
 
     #set infection parameters
     sim.Config.infection_chance = 0.3
@@ -267,6 +274,9 @@ if __name__ == '__main__':
 
     # run 0 (Business as usual)
     # sim.Config.social_distance_factor = 0.0
+
+    # run 1 (social distancing)
+    sim.Config.social_distance_factor = 0.0001 * 0.3
 
     # run 1 (social distancing)
     # sim.Config.social_distance_factor = 0.0001 * 0.2
@@ -290,11 +300,11 @@ if __name__ == '__main__':
     # sim.Config.social_distance_threshold_off = 0 # number of people
 
     # run 7 (self-isolation scenario)
-    sim.Config.healthcare_capacity = 600
-    sim.Config.wander_factor_dest = 0.1
-    sim.Config.set_self_isolation(number_of_tests = 450, self_isolate_proportion = 1.0,
-                                  isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
-                                  traveling_infects=False)
+    # sim.Config.healthcare_capacity = 600
+    # sim.Config.wander_factor_dest = 0.1
+    # sim.Config.set_self_isolation(number_of_tests = 450, self_isolate_proportion = 1.0,
+    #                               isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
+    #                               traveling_infects=False)
 
     # run 8 (self-isolation scenario with social distancing after threshold)
     # sim.Config.social_distance_factor = 0.0001 * 0.3
@@ -344,3 +354,15 @@ if __name__ == '__main__':
     sim.initialize_simulation()
     #run, hold CTRL+C in terminal to end scenario early
     sim.run()
+
+    mean_distance = sim.pop_tracker.distance_travelled[-1]
+    plt.figure()
+    plt.plot(sim.pop_tracker.distance_travelled)
+
+    mean_GC = sim.pop_tracker.mean_perentage_covered[-1]
+    plt.figure()
+    plt.plot(sim.pop_tracker.mean_perentage_covered)
+
+    plt.show()
+    print(mean_GC)
+    print(mean_distance)

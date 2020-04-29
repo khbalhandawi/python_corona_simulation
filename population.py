@@ -116,6 +116,43 @@ def initialize_destination_matrix(pop_size, total_destinations):
 
     return destinations
 
+def initialize_ground_covered_matrix(pop_size, n_gridpoints, xbounds=[0, 1], ybounds=[0, 1]):
+    '''intializes the destination matrix
+
+    function that initializes the destination matrix used to
+    define individual location and roam zones for population members
+
+    Keyword arguments
+    -----------------
+    pop_size : int
+        the size of the population
+
+    n_gridpoints : int
+        resolution of the grid dimensions in 1D
+
+    xbounds : 2d array
+        lower and upper bounds of x axis
+
+    ybounds : 2d array
+        lower and upper bounds of y axis
+    '''
+
+    x = np.linspace(xbounds[0], xbounds[1], n_gridpoints)
+    y = np.linspace(ybounds[0], ybounds[1], n_gridpoints)
+
+    # create list of grid points and their bounding boxes
+    yy,xx=np.meshgrid(x,y, indexing = 'ij')
+
+    grid_coords_xlb = xx[:-1,:-1].reshape(((n_gridpoints-1)**2,1))
+    grid_coords_ylb = yy[:-1,:-1].reshape(((n_gridpoints-1)**2,1))
+    grid_coords_xub = xx[1:,1:].reshape(((n_gridpoints-1)**2,1))
+    grid_coords_yub = yy[1:,1:].reshape(((n_gridpoints-1)**2,1))
+
+    grid_coords = np.column_stack((grid_coords_xlb,grid_coords_ylb,grid_coords_xub,grid_coords_yub))
+
+    ground_covered = np.zeros((pop_size, (n_gridpoints-1)**2))
+    
+    return grid_coords, ground_covered
 
 def set_destination_bounds(population, destinations, xmin, ymin, 
                            xmax, ymax, dest_no=1, teleport=True):
@@ -225,10 +262,13 @@ class Population_trackers():
         self.infectious = []
         self.recovered = []
         self.fatalities = []
-        self.distance_travelled = []
         self.Config = args[0]
+        self.distance_travelled = []
         self.total_distance = np.zeros(self.Config.pop_size) # distance travelled by individuals
-
+        self.mean_perentage_covered = []
+        self.grid_coords = args[1]
+        self.ground_covered = args[2]
+        self.perentage_covered = np.zeros(self.Config.pop_size) # portion of world covered by individuals
         #PLACEHOLDER - whether recovered individual can be reinfected
         self.reinfect = False 
 
@@ -240,12 +280,41 @@ class Population_trackers():
         self.recovered.append(len(population[population[:,6] == 2]))
         self.fatalities.append(len(population[population[:,6] == 3]))
 
-        # Popoulation speed
-        speed_vector = population[:,3:5][population[:,11] == 0] # speed of individuals within world
-        distance_individuals = np.linalg.norm( speed_vector ,axis = 1) * self.Config.dt # current distance travelled 
-        self.total_distance[population[:,11] == 0] += distance_individuals # cumilative distance travelled
-        self.distance_travelled.append(np.mean(self.total_distance)) # mean cumilative distance
+        # Compute and track ground covered
+        if self.Config.track_position:
 
+            # Total distance travelled
+            speed_vector = population[:,3:5][population[:,11] == 0] # speed of individuals within world
+            distance_individuals = np.linalg.norm( speed_vector ,axis = 1) * self.Config.dt # current distance travelled 
+
+            self.total_distance[population[:,11] == 0] += distance_individuals # cumilative distance travelled
+            self.distance_travelled.append(np.mean(self.total_distance)) # mean cumilative distance
+
+            # Track ground covered
+            n_inside_world = len([population[:,11] == 0])
+            position_vector = population[:,1:3][population[:,11] == 0] # position of individuals within world
+            
+            #1D
+            pos_vector_x = position_vector[:,0]
+            pos_vector_y = position_vector[:,1]
+
+            g1 = np.tile(self.grid_coords[:,0],(n_inside_world,1)).T
+            g2 = np.tile(self.grid_coords[:,1],(n_inside_world,1)).T
+            g3 = np.tile(self.grid_coords[:,2],(n_inside_world,1)).T
+            g4 = np.tile(self.grid_coords[:,3],(n_inside_world,1)).T
+
+            l_x = (pos_vector_x - g1).T
+            l_y = (pos_vector_y - g2).T
+            u_x = (g3 - pos_vector_x).T
+            u_y = (g4 - pos_vector_y).T
+
+            cond = (l_x > 0) & (u_x > 0) & (l_y > 0) & (u_y > 0)
+
+            self.ground_covered[cond[population[:,11] == 0]] = 1
+            self.perentage_covered = np.sum(self.ground_covered,axis=1)/len(self.grid_coords[:,0])
+            self.mean_perentage_covered.append(np.mean(self.perentage_covered)) # mean ground covered
+        
+        # Mark recovered individuals as susceptable if reinfection enables
         if self.reinfect:
             self.susceptible.append(pop_size - (self.infectious[-1] +
                                                 self.fatalities[-1]))

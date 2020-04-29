@@ -30,6 +30,8 @@ class Configuration():
         #world variables, defines where population can and cannot roam
         self.xbounds = [0.02, 0.98]
         self.ybounds = [0.02, 0.98]
+        self.n_gridpoints = 10 # resolution of 2D grid for tracking population position
+        self.track_position = True
         
         #visualisation variables
         self.visualise = True #whether to visualise the simulation 
