@@ -20,7 +20,7 @@ def parallel_sampling(sim_object,n_samples,log_file):
 
     resultsfile=open(log_file,'w')
     resultsfile.write('index'+','+'SD_factor'+','+'threshold'+','+'violations'+','+'testing_capacity'+','
-                    +'n_infected'+','+'n_fatalaties'+','+'mean_distance'+','+'n_steps'+'\n')
+                    +'n_infected'+','+'n_fatalaties'+','+'mean_GC'+','+'n_steps'+'\n')
     resultsfile.close()
 
     def processInput(i,sim,log_file):
@@ -36,7 +36,7 @@ def parallel_sampling(sim_object,n_samples,log_file):
         resultsfile=open(log_file,'a+')
         resultsfile.write(str(i)+','+str(sim.Config.social_distance_factor / 0.0001)+','+str(sim.Config.social_distance_threshold_on)+','
                         +str(sim.Config.social_distance_violation)+','+str(sim.Config.number_of_tests)+','
-                        +str(infected)+','+str(fatalities)+','+str(mean_distance)+','+str(sim.frame)+'\n')
+                        +str(infected)+','+str(fatalities)+','+str(mean_GC)+','+str(sim.frame)+'\n')
         resultsfile.close()
 
 
@@ -368,6 +368,10 @@ if __name__ == '__main__':
                                             r'\usepackage{amssymb}']
     mpl.rcParams['font.family'] = 'serif'
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color'] # ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', ...]
+
+    # Resume MCS
+    # SD_factors = SD_factors[3:]
+    # run = 3
 
     # for n_violators in n_violators_sweep:
     # for test_capacity in test_capacities:

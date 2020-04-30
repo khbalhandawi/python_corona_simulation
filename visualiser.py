@@ -151,18 +151,26 @@ def draw_tstep(Config, population, pop_tracker, frame,
         
     #plot population segments
     healthy = population[population[:,6] == 0][:,1:3]
-    ax1.scatter(healthy[:,0], healthy[:,1], color=palette[0], s = 15, label='healthy')
+    ax1.scatter(healthy[:,0], healthy[:,1], color=palette[0], s = 15, label='healthy', zorder = 2)
     
     infected = population[population[:,6] == 1][:,1:3]
-    ax1.scatter(infected[:,0], infected[:,1], color=palette[1], s = 15, label='infected')
+    ax1.scatter(infected[:,0], infected[:,1], color=palette[1], s = 15, label='infected', zorder = 2)
 
     immune = population[population[:,6] == 2][:,1:3]
-    ax1.scatter(immune[:,0], immune[:,1], color=palette[2], s = 15, label='immune')
+    ax1.scatter(immune[:,0], immune[:,1], color=palette[2], s = 15, label='immune', zorder = 2)
     
     fatalities = population[population[:,6] == 3][:,1:3]
-    ax1.scatter(fatalities[:,0], fatalities[:,1], color=palette[3], s = 15, label='dead')
+    ax1.scatter(fatalities[:,0], fatalities[:,1], color=palette[3], s = 15, label='dead', zorder = 2)
         
-    
+    # # Trace path of random individual
+    # grid_coords = pop_tracker.grid_coords
+    # ground_covered = pop_tracker.ground_covered[0,:]
+
+    # for grid in grid_coords[ground_covered == 1]:
+    #     rect = patches.Rectangle(grid[:2], grid[2] - grid[0], grid[3] - grid[1], facecolor='r', fill='r')
+    #     # Add the patch to the Axes
+    #     ax1.add_patch(rect)
+
     #add text descriptors
     ax1.text(Config.xbounds[0], 
              Config.ybounds[1] + ((Config.ybounds[1] - Config.ybounds[0]) / 100), 

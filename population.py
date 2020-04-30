@@ -36,6 +36,7 @@ def initialize_population(Config, mean_age=45, max_age=105,
     15 : total force x
     16 : total force y
     17 : violator (0: complaint 1: violator)
+    18 : flagged for testing (0: no 1: yes)
 
     Keyword arguments
     -----------------
@@ -56,7 +57,7 @@ def initialize_population(Config, mean_age=45, max_age=105,
     '''
 
     #initialize population matrix
-    population = np.zeros((Config.pop_size, 18))
+    population = np.zeros((Config.pop_size, 19))
 
     #initalize unique IDs
     population[:,0] = [x for x in range(Config.pop_size)]
@@ -94,7 +95,6 @@ def initialize_population(Config, mean_age=45, max_age=105,
     population[violators,17] = 1
 
     return population
-
 
 def initialize_destination_matrix(pop_size, total_destinations):
     '''intializes the destination matrix
@@ -203,7 +203,6 @@ def set_destination_bounds(population, destinations, xmin, ymin,
 
     return population, destinations
 
-
 def save_data(population, pop_tracker):
     '''dumps simulation data to disk
 
@@ -247,7 +246,6 @@ def save_population(population, tstep=0, folder='data_tstep'):
     ''' 
     check_folder('%s/' %(folder))
     np.save('%s/population_%i.npy' %(folder, tstep), population)
-
 
 class Population_trackers():
     '''class used to track population parameters
@@ -313,7 +311,7 @@ class Population_trackers():
             self.ground_covered[cond[population[:,11] == 0]] = 1
             self.perentage_covered = np.sum(self.ground_covered,axis=1)/len(self.grid_coords[:,0])
             self.mean_perentage_covered.append(np.mean(self.perentage_covered)) # mean ground covered
-        
+            
         # Mark recovered individuals as susceptable if reinfection enables
         if self.reinfect:
             self.susceptible.append(pop_size - (self.infectious[-1] +

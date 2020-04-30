@@ -58,10 +58,6 @@ def find_nearby(population, infection_zone, traveling_infects=False,
         
     else:
         raise ValueError('type to find %s not understood! Must be either \'healthy\' or \'ill\'')
-        
-        
-
-
 
 def infect(population, Config, frame, send_to_location=False, 
            location_bounds=[], destinations=[], location_no=1, 
@@ -123,10 +119,6 @@ def infect(population, Config, frame, send_to_location=False,
 
     new_infections = []
 
-    # randomly pick individuals for testing
-    test_indices = np.int32(random.sample(list(population[:,0][population[:,11] == 0]), 
-                    k=min(Config.number_of_tests, len(list(population[:,0][population[:,11] == 0])))))
-
     #if less than half are infected, slice based on infected (to speed up computation)
     if len(infected_previous_step) < (Config.pop_size // 2):
         for patient in infected_previous_step:
@@ -145,28 +137,10 @@ def infect(population, Config, frame, send_to_location=False,
                 if np.random.random() < Config.infection_chance:
                     population[idx][6] = 1
                     population[idx][8] = frame
-
-                    if len(population[population[:,10] == 1]) <= Config.healthcare_capacity and idx in test_indices:
-                        population[idx][10] = 1
-                        if send_to_location:
-                            #send to location if die roll is positive
-                            if np.random.uniform() <= location_odds:
-                                population[idx],\
-                                destinations[idx] = go_to_location(population[idx],
-                                                                    destinations[idx],
-                                                                    location_bounds, 
-                                                                    dest_no=location_no)
-                        else:
-                            pass
-
-
                     new_infections.append(idx)
 
     else:
         #if more than half are infected slice based in healthy people (to speed up computation)
-            
-        
-        
         for person in healthy_previous_step:
             #define infecftion range around healthy person
             infection_zone = [person[1] - Config.infection_range, person[2] - Config.infection_range,
@@ -189,20 +163,29 @@ def infect(population, Config, frame, send_to_location=False,
                         #roll die to see if healthy person will be infected
                         population[np.int32(person[0])][6] = 1
                         population[np.int32(person[0])][8] = frame
-                        
-                        if len(population[population[:,10] == 1]) <= Config.healthcare_capacity and np.int32(person[0]) in test_indices:
-                            population[np.int32(person[0])][10] = 1
-                            if send_to_location:
-                                #send to location and add to treatment if die roll is positive
-                                if np.random.uniform() < location_odds:
-                                    population[np.int32(person[0])],\
-                                    destinations[np.int32(person[0])] = go_to_location(population[np.int32(person[0])],
-                                                                                        destinations[np.int32(person[0])],
-                                                                                        location_bounds, 
-                                                                                        dest_no=location_no)
-
-
                         new_infections.append(np.int32(person[0]))
+
+    # randomly pick individuals for testing
+    test_cond = (population[:,11] == 0) & (population[:,6] != 2) # Test anyone who has not recovered
+
+    test_indices = np.int32(random.sample(list(population[:,0][population[:,11] == 0]), 
+                    k=min(Config.number_of_tests, len(list(population[:,0][population[:,11] == 0])))))
+
+    population[test_indices,18] = 1 # flag these individuals for testing
+    cond = (population[:,18] == 1) & (population[:,6] == 1) & (frame - population[:,8] >= Config.incubation_period) # condition for isolation
+        
+    if send_to_location and len(population[population[:,10] == 1]) <= Config.healthcare_capacity:
+        population[:,10][cond] = 1 # hospitalize sick individuals
+
+        population[cond],\
+        destinations[cond] = go_to_location(population[cond],
+                                            destinations[cond],
+                                            location_bounds, 
+                                            dest_no=location_no)
+    else:
+        pass
+
+    population[:,18] = 0 # reset testing flag
 
     if len(new_infections) > 0 and Config.verbose:
         print('\nat timestep %i these people got sick: %s' %(frame, new_infections))
@@ -211,7 +194,6 @@ def infect(population, Config, frame, send_to_location=False,
         return population
     else:
         return population, destinations
-
 
 def recover_or_die(population, frame, Config):
     '''see whether to recover or die
@@ -316,7 +298,6 @@ def recover_or_die(population, frame, Config):
 
     return population
 
-
 def compute_mortality(age, mortality_chance, risk_age=50,
                       critical_age=80, critical_mortality_chance=0.5,
                       risk_increase='linear'):
@@ -377,7 +358,6 @@ def compute_mortality(age, mortality_chance, risk_age=50,
     elif age >= critical_age:
         #simply return the maximum mortality chance
         return critical_mortality_chance
-
 
 def healthcare_infection_correction(worker_population, healthcare_risk_factor=0.2):
     '''corrects infection to healthcare population.

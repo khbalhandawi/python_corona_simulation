@@ -91,7 +91,7 @@ class Simulation():
             self.above_deact_thresh = sum(self.population[:,6][self.population[:,11] == 0] == 1) <= \
                                        self.Config.social_distance_threshold_off
 
-        act_social_distancing = self.above_act_thresh and not self.above_deact_thresh
+        act_social_distancing = self.above_act_thresh and not self.above_deact_thresh and sum(self.population[:,6] == 1) > 0
 
         #activate social distancing only for compliant individuals
         if self.Config.social_distance_factor > 0 and act_social_distancing:
@@ -207,6 +207,8 @@ class Simulation():
                 if len(self.population[(self.population[:,6] == 1) | 
                                        (self.population[:,6] == 4)]) == 0:
                     i = self.Config.simulation_steps
+            else:
+                i += 1
 
         
         if self.Config.plot_last_tstep:
@@ -235,10 +237,11 @@ if __name__ == '__main__':
     sim = Simulation()
 
     #set number of simulation steps
-    sim.Config.simulation_steps = 20000
+    sim.Config.simulation_steps = 1000
     sim.Config.pop_size = 600
-    sim.Config.n_gridpoints = 33
-    sim.Config.track_position = True
+    sim.Config.n_gridpoints = 100
+    sim.Config.track_position = False
+    sim.Config.endif_no_infections = True
 
     #set visuals
     # sim.Config.plot_style = 'default' #can also be dark
@@ -251,17 +254,18 @@ if __name__ == '__main__':
 
     sim.Config.plot_style = 'default' #can also be dark
     sim.Config.plot_text_style = 'default' #can also be LaTeX
-    sim.Config.visualise = False
-    sim.Config.visualise_every_n_frame = 2
+    sim.Config.visualise = True
+    sim.Config.visualise_every_n_frame = 10
     sim.Config.plot_last_tstep = True
-    sim.Config.verbose = True
-    sim.Config.save_plot = True
+    sim.Config.verbose = False
+    sim.Config.save_plot = False
     sim.Config.save_data = False
 
     #set infection parameters
     sim.Config.infection_chance = 0.3
     sim.Config.infection_range = 0.03
     sim.Config.mortality_chance = 0.09 #global baseline chance of dying from the disease
+    sim.Config.incubation_period = 5
 
     #set movement parameters
     sim.Config.speed = 0.15
@@ -274,9 +278,6 @@ if __name__ == '__main__':
 
     # run 0 (Business as usual)
     # sim.Config.social_distance_factor = 0.0
-
-    # run 1 (social distancing)
-    sim.Config.social_distance_factor = 0.0001 * 0.3
 
     # run 1 (social distancing)
     # sim.Config.social_distance_factor = 0.0001 * 0.2
@@ -300,9 +301,9 @@ if __name__ == '__main__':
     # sim.Config.social_distance_threshold_off = 0 # number of people
 
     # run 7 (self-isolation scenario)
-    # sim.Config.healthcare_capacity = 600
+    # sim.Config.healthcare_capacity = 50
     # sim.Config.wander_factor_dest = 0.1
-    # sim.Config.set_self_isolation(number_of_tests = 450, self_isolate_proportion = 1.0,
+    # sim.Config.set_self_isolation(number_of_tests = 50, self_isolate_proportion = 1.0,
     #                               isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
     #                               traveling_infects=False)
 
@@ -312,7 +313,7 @@ if __name__ == '__main__':
 
     # sim.Config.healthcare_capacity = 600
     # sim.Config.wander_factor_dest = 0.1
-    # sim.Config.set_self_isolation(number_of_tests = 450, self_isolate_proportion = 1.0,
+    # sim.Config.set_self_isolation(number_of_tests = 10, self_isolate_proportion = 1.0,
     #                               isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
     #                               traveling_infects=False)
 

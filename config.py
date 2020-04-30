@@ -32,7 +32,7 @@ class Configuration():
         self.ybounds = [0.02, 0.98]
         self.n_gridpoints = 10 # resolution of 2D grid for tracking population position
         self.track_position = True
-        
+
         #visualisation variables
         self.visualise = True #whether to visualise the simulation 
         self.visualise_every_n_frame = 1 #Frequency of plot update
@@ -91,6 +91,7 @@ class Configuration():
         self.infection_chance=0.03   #chance that an infection spreads to nearby healthy people each tick
         self.recovery_duration=(200, 500) #how many ticks it may take to recover from the illness
         self.mortality_chance=0.02 #global baseline chance of dying from the disease
+        self.incubation_period=0 #number of frames the individual spreads disease unknowingly
 
         #healthcare variables
         self.healthcare_capacity = 300 #capacity of the healthcare system

@@ -6,8 +6,15 @@ Created on Wed Apr 29 12:33:13 2020
 """
 
 import numpy as np
+import random
 
-n_gridpoints = 5
+def gt(p):
+    
+    p[:,1] = 0.5
+    
+    return p
+
+n_gridpoints = 33
 
 xbounds = [0,1]
 ybounds = [0,1]
@@ -28,7 +35,7 @@ grid_coords_yub = yy[1:,1:].reshape(((n_gridpoints-1)**2,1))
 
 grid_coords = np.column_stack((grid_coords_xlb,grid_coords_ylb,grid_coords_xub,grid_coords_yub))
 
-pop_size = 600
+pop_size = 2000
 
 pos_vector = np.random.random((pop_size,2))
 ground_covered = np.zeros((pop_size, (n_gridpoints-1)**2))
@@ -55,6 +62,22 @@ gp[cond]
 
 ground_covered[cond] = 1
 print(ground_covered)
+
+
+x = np.arange(pop_size).reshape(pop_size,1)
+t = np.zeros(pop_size).reshape(pop_size,1)
+test_indices = np.int32(random.sample(list(x), 
+                 k=10))
+
+p = np.hstack((x,pos_vector,t))
+
+p[test_indices,3] = 1
+cond = (p[:,3] == 1)
+
+p[cond]
+
+p[cond] = gt(p[cond])
+
 
 #4D
 # pos_vector_x = pos_vector[:,0]

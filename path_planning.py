@@ -7,7 +7,7 @@ import numpy as np
 
 from motion import get_motion_parameters, update_wall_forces
 
-def go_to_location(patient, destination, location_bounds, dest_no=1):
+def go_to_location(patients, destinations, location_bounds, dest_no=1):
     '''sends patient to defined location
 
     Function that takes a patient an destination, and sets the location
@@ -15,11 +15,11 @@ def go_to_location(patient, destination, location_bounds, dest_no=1):
 
     Keyword arguments
     -----------------
-    patient : 1d array
-        1d array of the patient data, is a row from population matrix
+    population : ndarray
+        the array containing all the population information
 
-    destination : 1d array
-        1d array of the destination data, is a row from destination matrix
+    destinations : ndarray
+        the array containing all destinations information
 
     location_bounds : list or tuple
         defines bounds for the location the patient will be roam in when sent
@@ -38,15 +38,15 @@ def go_to_location(patient, destination, location_bounds, dest_no=1):
                                                                     location_bounds[1],
                                                                     location_bounds[2],
                                                                     location_bounds[3])
-    patient[13] = x_wander
-    patient[14] = y_wander
+    patients[:,13] = x_wander
+    patients[:,14] = y_wander
     
-    destination[(dest_no - 1) * 2] = x_center
-    destination[((dest_no - 1) * 2) + 1] = y_center
+    destinations[:,(dest_no - 1) * 2] = x_center
+    destinations[:,((dest_no - 1) * 2) + 1] = y_center
 
-    patient[11] = dest_no #set destination active
+    patients[:,11] = dest_no #set destination active
 
-    return patient, destination
+    return patients, destinations
 
 
 def set_destination(population, destinations, travel_speed = 2):
