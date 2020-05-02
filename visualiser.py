@@ -151,16 +151,16 @@ def draw_tstep(Config, population, pop_tracker, frame,
         
     #plot population segments
     healthy = population[population[:,6] == 0][:,1:3]
-    ax1.scatter(healthy[:,0], healthy[:,1], color=palette[0], s = 15, label='healthy', zorder = 2)
+    ax1.scatter(healthy[:,0], healthy[:,1], color=palette[0], s = Config.marker_size, label='healthy', zorder = 2)
     
     infected = population[population[:,6] == 1][:,1:3]
-    ax1.scatter(infected[:,0], infected[:,1], color=palette[1], s = 15, label='infected', zorder = 2)
+    ax1.scatter(infected[:,0], infected[:,1], color=palette[1], s = Config.marker_size, label='infected', zorder = 2)
 
     immune = population[population[:,6] == 2][:,1:3]
-    ax1.scatter(immune[:,0], immune[:,1], color=palette[2], s = 15, label='immune', zorder = 2)
+    ax1.scatter(immune[:,0], immune[:,1], color=palette[2], s = Config.marker_size, label='immune', zorder = 2)
     
     fatalities = population[population[:,6] == 3][:,1:3]
-    ax1.scatter(fatalities[:,0], fatalities[:,1], color=palette[3], s = 15, label='dead', zorder = 2)
+    ax1.scatter(fatalities[:,0], fatalities[:,1], color=palette[3], s = Config.marker_size, label='dead', zorder = 2)
         
     # # Trace path of random individual
     # grid_coords = pop_tracker.grid_coords

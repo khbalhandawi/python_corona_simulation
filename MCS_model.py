@@ -42,7 +42,7 @@ def parallel_sampling(sim_object,n_samples,log_file):
 
         return [infected, fatalities, mean_GC]
     
-    num_cores = multiprocessing.cpu_count() - 2
+    num_cores = multiprocessing.cpu_count() - 1
         
     results = Parallel(n_jobs=num_cores)(delayed(processInput)(i,sim,log_file) for i in inputs)
 
@@ -286,10 +286,17 @@ if __name__ == '__main__':
     sim = Simulation()
 
     #set number of simulation steps
-    sim.Config.simulation_steps = 20000
-    sim.Config.pop_size = 600
+    sim.Config.simulation_steps = 3500
+    sim.Config.pop_size = 1000
     sim.Config.n_gridpoints = 33
     sim.Config.track_position = True
+    sim.Config.update_every_n_frame = 5
+    sim.Config.endif_no_infections = False
+
+    area_scaling = 1 / sim.Config.pop_size / 600
+    distance_scaling = 1 / np.sqrt(sim.Config.pop_size / 600)
+    force_scaling = distance_scaling ** 4
+    count_scaling = sim.Config.pop_size / 600
 
     #set visuals
     # sim.Config.plot_style = 'dark' #can also be dark
@@ -313,33 +320,34 @@ if __name__ == '__main__':
     sim.Config.infection_chance = 0.1
     sim.Config.infection_range = 0.03
     sim.Config.mortality_chance = 0.09 #global baseline chance of dying from the disease
+    sim.Config.incubation_period = 5
 
     #set movement parameters
-    sim.Config.speed = 0.15
-    sim.Config.max_speed = 0.3
+    sim.Config.speed = 0.15 * distance_scaling
+    sim.Config.max_speed = 0.3 * distance_scaling
     sim.Config.dt = 0.01
 
-    sim.Config.wander_step_size = 0.01
+    sim.Config.wander_step_size = 0.01 * distance_scaling
     sim.Config.gravity_strength = 0
     sim.Config.wander_step_duration = sim.Config.dt * 10
 
     run = 0
 
-    # n_samples = 1000
-    # n_bins = 30 # for continuous distributions
-    # min_bin_width_i = 15 # for discrete distributions
-    # min_bin_width_f = 5 # for discrete distributions
-
-    n_samples = 200
+    n_samples = 1000
     n_bins = 30 # for continuous distributions
     min_bin_width_i = 15 # for discrete distributions
     min_bin_width_f = 5 # for discrete distributions
 
+    # n_samples = 200
+    # n_bins = 30 # for continuous distributions
+    # min_bin_width_i = 15 # for discrete distributions
+    # min_bin_width_f = 5 # for discrete distributions
+
     new_run = True
 
-    n_violators_sweep = np.arange(5, 30, 5)
-    SD_factors = np.linspace(0.05,0.3,5)
-    test_capacities = np.arange(450, 600, 30)
+    n_violators_sweep = np.arange(16, 101, 21)
+    SD_factors = np.linspace(0.05,0.3,5) * force_scaling
+    test_capacities = np.arange(50, 110, 13)
 
     same_axis = True
     if same_axis:
@@ -382,18 +390,29 @@ if __name__ == '__main__':
         legend_label = 'Social distancing factor = %f' %(SD)
 
         if new_run:
+            #=====================================================================#
+            # Essential workers sweep
+
             # sim.Config.social_distance_factor = 0.0001 * 0.3
             # sim.Config.social_distance_threshold_on = 20 # number of people
             # sim.Config.social_distance_threshold_off = 0 # number of people
             # sim.Config.social_distance_violation = n_violators # number of people
+            #=====================================================================#
+            # SD sweep
 
             sim.Config.social_distance_factor = 0.0001 * SD
+            #=====================================================================#
+            # Testing sweep
 
-            sim.Config.healthcare_capacity = 600
+            # sim.Config.social_distance_factor = 0.0001 * 0.1 * force_scaling
+            # sim.Config.social_distance_threshold_on = 20 # number of people 
+
+            # sim.Config.healthcare_capacity = 50
             # sim.Config.wander_factor_dest = 0.1
             # sim.Config.set_self_isolation(number_of_tests = test_capacity, self_isolate_proportion = 1.0,
             #                               isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
             #                               traveling_infects=False)
+            #=====================================================================#
 
             check_folder('data/')
             log_file = 'data/MCS_data_r%i.log' %run

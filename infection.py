@@ -166,15 +166,19 @@ def infect(population, Config, frame, send_to_location=False,
                         new_infections.append(np.int32(person[0]))
 
     # randomly pick individuals for testing
-    test_cond = (population[:,11] == 0) & (population[:,6] != 2) # Test anyone who has not recovered
-
     test_indices = np.int32(random.sample(list(population[:,0][population[:,11] == 0]), 
                     k=min(Config.number_of_tests, len(list(population[:,0][population[:,11] == 0])))))
-
     population[test_indices,18] = 1 # flag these individuals for testing
     cond = (population[:,18] == 1) & (population[:,6] == 1) & (frame - population[:,8] >= Config.incubation_period) # condition for isolation
-        
-    if send_to_location and len(population[population[:,10] == 1]) <= Config.healthcare_capacity:
+    
+    # People that need to be hospitalized (decide who gets care randomly)
+    population[test_indices,18] = 0 # reset testing flags
+    test_indices = np.int32(random.sample(list(population[:,0][cond]), 
+                    k=min(len(population[cond]), Config.healthcare_capacity - len(population[population[:,10] == 1]))))
+    population[test_indices,18] = 1 # flag these individuals for testing
+    cond = (population[:,18] == 1) # condition for isolation
+
+    if send_to_location:
         population[:,10][cond] = 1 # hospitalize sick individuals
 
         population[cond],\
@@ -187,7 +191,7 @@ def infect(population, Config, frame, send_to_location=False,
 
     population[:,18] = 0 # reset testing flag
 
-    if len(new_infections) > 0 and Config.verbose:
+    if len(new_infections) > 0 and Config.verbose and Config.report_status:
         print('\nat timestep %i these people got sick: %s' %(frame, new_infections))
 
     if len(destinations) == 0:
@@ -288,9 +292,9 @@ def recover_or_die(population, frame, Config):
             infected_people[:,10][infected_people[:,0] == idx] = 0
             recovered.append(np.int32(infected_people[infected_people[:,0] == idx][:,0][0]))
 
-    if len(fatalities) > 0 and Config.verbose:
+    if len(fatalities) > 0 and Config.verbose and Config.report_status:
         print('\nat timestep %i these people died: %s' %(frame, fatalities))
-    if len(recovered) > 0 and Config.verbose:
+    if len(recovered) > 0 and Config.verbose and Config.report_status:
         print('\nat timestep %i these people recovered: %s' %(frame, recovered))
 
     #put array back into population

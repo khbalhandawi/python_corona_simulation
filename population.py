@@ -261,37 +261,38 @@ class Population_trackers():
         self.recovered = []
         self.fatalities = []
         self.Config = args[0]
-        self.distance_travelled = []
+        self.distance_travelled = [0.0]
         self.total_distance = np.zeros(self.Config.pop_size) # distance travelled by individuals
-        self.mean_perentage_covered = []
+        self.mean_perentage_covered = [0.0]
         self.grid_coords = args[1]
         self.ground_covered = args[2]
         self.perentage_covered = np.zeros(self.Config.pop_size) # portion of world covered by individuals
         #PLACEHOLDER - whether recovered individual can be reinfected
         self.reinfect = False 
 
-    def update_counts(self, population):
+    def update_counts(self, population, frame):
         '''docstring
         '''
         pop_size = population.shape[0]
         self.infectious.append(len(population[population[:,6] == 1]))
         self.recovered.append(len(population[population[:,6] == 2]))
         self.fatalities.append(len(population[population[:,6] == 3]))
-
+        
         # Compute and track ground covered
-        if self.Config.track_position:
+        if self.Config.track_position and (frame % self.Config.update_every_n_frame) == 0:
 
             # Total distance travelled
-            speed_vector = population[:,3:5][population[:,11] == 0] # speed of individuals within world
-            distance_individuals = np.linalg.norm( speed_vector ,axis = 1) * self.Config.dt # current distance travelled 
+            # speed_vector = population[:,3:5][population[:,11] == 0] # speed of individuals within world
+            # distance_individuals = np.linalg.norm( speed_vector ,axis = 1) * self.Config.dt # current distance travelled 
 
-            self.total_distance[population[:,11] == 0] += distance_individuals # cumilative distance travelled
-            self.distance_travelled.append(np.mean(self.total_distance)) # mean cumilative distance
+            # self.total_distance[population[:,11] == 0] += distance_individuals # cumilative distance travelled
+            # self.distance_travelled.append(np.mean(self.total_distance)) # mean cumilative distance
 
             # Track ground covered
             n_inside_world = len([population[:,11] == 0])
             position_vector = population[:,1:3][population[:,11] == 0] # position of individuals within world
-            
+            GC_matrix = self.ground_covered[population[:,11] == 0]
+
             #1D
             pos_vector_x = position_vector[:,0]
             pos_vector_y = position_vector[:,1]
@@ -307,8 +308,9 @@ class Population_trackers():
             u_y = (g4 - pos_vector_y).T
 
             cond = (l_x > 0) & (u_x > 0) & (l_y > 0) & (u_y > 0)
+            GC_matrix[cond] = 1
 
-            self.ground_covered[cond[population[:,11] == 0]] = 1
+            self.ground_covered[population[:,11] == 0] = GC_matrix
             self.perentage_covered = np.sum(self.ground_covered,axis=1)/len(self.grid_coords[:,0])
             self.mean_perentage_covered.append(np.mean(self.perentage_covered)) # mean ground covered
             

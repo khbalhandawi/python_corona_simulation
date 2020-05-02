@@ -32,6 +32,7 @@ class Configuration():
         self.ybounds = [0.02, 0.98]
         self.n_gridpoints = 10 # resolution of 2D grid for tracking population position
         self.track_position = True
+        self.update_every_n_frame = 1
 
         #visualisation variables
         self.visualise = True #whether to visualise the simulation 
@@ -50,6 +51,8 @@ class Configuration():
         #available: deuteranopia, protanopia, tritanopia. defauld=deuteranopia
         self.colorblind_type = 'deuteranopia'
         self.verbose = True #output stats to console
+        self.report_status = False #output stats to console
+        self.marker_size = 15 #markersize for plotting individuals
 
         #population variables
         self.pop_size = 2000
