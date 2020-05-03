@@ -20,7 +20,7 @@ def parallel_sampling(sim_object,n_samples,log_file):
 
     resultsfile=open(log_file,'w')
     resultsfile.write('index'+','+'SD_factor'+','+'threshold'+','+'violations'+','+'testing_capacity'+','
-                    +'n_infected'+','+'n_fatalaties'+','+'mean_GC'+','+'n_steps'+'\n')
+                    +'n_infected'+','+'n_fatalaties'+','+'mean_GC'+','+'mean_distance'+','+'n_steps'+'\n')
     resultsfile.close()
 
     def processInput(i,sim,log_file):
@@ -30,34 +30,35 @@ def parallel_sampling(sim_object,n_samples,log_file):
                 
         infected = max(sim.pop_tracker.infectious)
         fatalities = sim.pop_tracker.fatalities[-1]
-        mean_distance = sim.pop_tracker.distance_travelled[-1]
-        mean_GC = sim.pop_tracker.mean_perentage_covered[-1]
+        mean_distance = (sim.pop_tracker.distance_travelled[-1] / sim.frame) * 100
+        mean_GC = (sim.pop_tracker.mean_perentage_covered[-1] / sim.frame) * 100
 
         resultsfile=open(log_file,'a+')
         resultsfile.write(str(i)+','+str(sim.Config.social_distance_factor / 0.0001)+','+str(sim.Config.social_distance_threshold_on)+','
                         +str(sim.Config.social_distance_violation)+','+str(sim.Config.number_of_tests)+','
-                        +str(infected)+','+str(fatalities)+','+str(mean_GC)+','+str(sim.frame)+'\n')
+                        +str(infected)+','+str(fatalities)+','+str(mean_GC)+','+str(mean_distance)+','+str(sim.frame)+'\n')
         resultsfile.close()
 
 
-        return [infected, fatalities, mean_GC]
+        return [infected, fatalities, mean_GC, mean_distance]
     
-    num_cores = multiprocessing.cpu_count() - 1
+    num_cores = multiprocessing.cpu_count() - 2
         
     results = Parallel(n_jobs=num_cores)(delayed(processInput)(i,sim,log_file) for i in inputs)
 
-    infected_i = []; fatalities_i = []; distance_i = []
+    infected_i = []; fatalities_i = []; GC_i = []; distance_i = []
     for result in results:
 
         infected_i += [result[0]]
         fatalities_i += [result[1]]
-        distance_i += [result[2]]
+        GC_i += [result[2]]
+        distance_i += [result[3]]
 
-    return infected_i, fatalities_i, distance_i
+    return infected_i, fatalities_i, GC_i, distance_i
 
 def serial_sampling(sim_object,n_samples):
 
-    infected_i = []; distance_i = []
+    infected_i = []; fatalities_i = []; GC_i = []; distance_i = []
 
     for i in range(n_samples):  
         
@@ -67,13 +68,15 @@ def serial_sampling(sim_object,n_samples):
                 
         infected = sim_object.pop_tracker.infectious
         fatalities = sim.pop_tracker.fatalities
-        mean_distance = sim_object.pop_tracker.distance_travelled
+        mean_distance = (sim.pop_tracker.distance_travelled[-1] / sim.frame) * 100
+        mean_GC = (sim.pop_tracker.mean_perentage_covered[-1] / sim.frame) * 100
         
         infected_i += [max(infected)]
         fatalities_i += [fatalities[-1]]
-        distance_i += [mean_distance[-1]]
+        GC_i += [mean_GC]
+        distance_i += [mean_distance]
 
-    return infected_i, fatalities_i, distance_i
+    return infected_i, fatalities_i, GC_i, distance_i
 
 # Create models from data
 def best_fit_distribution(data, bins=200, ax=None):
@@ -286,12 +289,13 @@ if __name__ == '__main__':
     sim = Simulation()
 
     #set number of simulation steps
-    sim.Config.simulation_steps = 3500
+    sim.Config.simulation_steps = 20000
     sim.Config.pop_size = 1000
     sim.Config.n_gridpoints = 33
     sim.Config.track_position = True
+    sim.Config.track_GC = True
     sim.Config.update_every_n_frame = 5
-    sim.Config.endif_no_infections = False
+    sim.Config.endif_no_infections = True
 
     area_scaling = 1 / sim.Config.pop_size / 600
     distance_scaling = 1 / np.sqrt(sim.Config.pop_size / 600)
@@ -318,7 +322,7 @@ if __name__ == '__main__':
 
     #set infection parameters
     sim.Config.infection_chance = 0.1
-    sim.Config.infection_range = 0.03
+    sim.Config.infection_range = 0.03 * distance_scaling
     sim.Config.mortality_chance = 0.09 #global baseline chance of dying from the disease
     sim.Config.incubation_period = 5
 
@@ -333,35 +337,37 @@ if __name__ == '__main__':
 
     run = 0
 
-    n_samples = 1000
-    n_bins = 30 # for continuous distributions
-    min_bin_width_i = 15 # for discrete distributions
-    min_bin_width_f = 5 # for discrete distributions
-
-    # n_samples = 200
+    # n_samples = 1000
     # n_bins = 30 # for continuous distributions
     # min_bin_width_i = 15 # for discrete distributions
     # min_bin_width_f = 5 # for discrete distributions
+
+    n_samples = 200
+    n_bins = 30 # for continuous distributions
+    min_bin_width_i = 15 # for discrete distributions
+    min_bin_width_f = 5 # for discrete distributions
 
     new_run = True
 
     n_violators_sweep = np.arange(16, 101, 21)
     SD_factors = np.linspace(0.05,0.3,5) * force_scaling
-    test_capacities = np.arange(50, 110, 13)
+    test_capacities = np.arange(10, 51, 10)
 
     same_axis = True
     if same_axis:
         fig_infections = plt.figure(figsize=(10,5))
         fig_fatalities = plt.figure(figsize=(10,5))
         fig_dist = plt.figure(figsize=(10,5))
+        fig_GC = plt.figure(figsize=(10,5))
     else:
-        fig_infections = fig_fatalities = fig_dist = None
+        fig_infections = fig_fatalities = fig_dist = fig_GC = None
 
-    auto_limits = False
+    auto_limits = True
     if auto_limits:
         dataXLim_i = dataYLim_i = None
         dataXLim_f = dataYLim_f = None
         dataXLim_d = dataYLim_d = None
+        dataXLim_GC = dataYLim_GC = None
     else:
         with open('data/MCS_data_limits.pkl','rb') as fid:
             dataXLim_i = pickle.load(fid)
@@ -370,6 +376,8 @@ if __name__ == '__main__':
             dataYLim_f = pickle.load(fid)
             dataXLim_d = pickle.load(fid)
             dataYLim_d = pickle.load(fid)
+            dataXLim_GC = pickle.load(fid)
+            dataYLim_GC = pickle.load(fid)
 
     mpl.rc('text', usetex = True)
     mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}',
@@ -378,55 +386,60 @@ if __name__ == '__main__':
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color'] # ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', ...]
 
     # Resume MCS
-    # SD_factors = SD_factors[3:]
-    # run = 3
+    # n_violators_sweep = n_violators_sweep[4:]
+    # run = 4
 
-    # for n_violators in n_violators_sweep:
+    for n_violators in n_violators_sweep:
     # for test_capacity in test_capacities:
-    for SD in SD_factors:
+    # for SD in SD_factors:
 
-        # legend_label = 'Number of violators = %i people' %(n_violators)
+        legend_label = 'Number of essential workers = %i people' %(n_violators)
         # legend_label = 'Testing capacity = %i people' %(test_capacity)
-        legend_label = 'Social distancing factor = %f' %(SD)
+        # legend_label = 'Social distancing factor = %f' %(SD)
 
         if new_run:
             #=====================================================================#
             # Essential workers sweep
 
-            # sim.Config.social_distance_factor = 0.0001 * 0.3
-            # sim.Config.social_distance_threshold_on = 20 # number of people
-            # sim.Config.social_distance_threshold_off = 0 # number of people
-            # sim.Config.social_distance_violation = n_violators # number of people
+            sim.Config.social_distance_factor = 0.0001 * 0.3
+            sim.Config.social_distance_threshold_on = 15 # number of people
+            sim.Config.social_distance_threshold_off = 0 # number of people
+            sim.Config.social_distance_violation = n_violators # number of people
             #=====================================================================#
             # SD sweep
 
-            sim.Config.social_distance_factor = 0.0001 * SD
+            # sim.Config.social_distance_factor = 0.0001 * SD
             #=====================================================================#
             # Testing sweep
 
             # sim.Config.social_distance_factor = 0.0001 * 0.1 * force_scaling
-            # sim.Config.social_distance_threshold_on = 20 # number of people 
+            # sim.Config.thresh_type = 'hospitalized'
+            # sim.Config.social_distance_threshold_on = 15 # number of people 
+            # sim.Config.testing_threshold_on = 15 # number of people 
 
-            # sim.Config.healthcare_capacity = 50
+            # sim.Config.healthcare_capacity = 150
             # sim.Config.wander_factor_dest = 0.1
             # sim.Config.set_self_isolation(number_of_tests = test_capacity, self_isolate_proportion = 1.0,
-            #                               isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
-            #                               traveling_infects=False)
+            #                             isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
+            #                             traveling_infects=False)
             #=====================================================================#
 
             check_folder('data/')
             log_file = 'data/MCS_data_r%i.log' %run
-            [infected_i,fatalities_i,distance_i] = parallel_sampling(sim,n_samples,log_file)
+            [infected_i,fatalities_i,GC_i,distance_i] = parallel_sampling(sim,n_samples,log_file)
 
             with open('data/MCS_data_r%i.pkl' %run,'wb') as fid:
                 pickle.dump(infected_i,fid)
                 pickle.dump(fatalities_i,fid)
+                pickle.dump(GC_i,fid)
                 pickle.dump(distance_i,fid)
         else:
             with open('data/MCS_data_r%i.pkl' %run,'rb') as fid:
                 infected_i = pickle.load(fid)
                 fatalities_i = pickle.load(fid)
+                GC_i = pickle.load(fid)
                 distance_i = pickle.load(fid)
+                distance_i = [i for i in distance_i if i <= 0.15] # eliminate outliers
 
         label_name = u'Maximum number of infected'
         fun_name = 'infections'
@@ -452,12 +465,22 @@ if __name__ == '__main__':
             fig_swept = fig_dist, run_label = legend_label, color = colors[run], 
             dataXLim = dataXLim_d, dataYLim = dataYLim_d)
         
+        label_name = u'Percentage of world explored'
+        fun_name = 'ground covered'
+        data = GC_i
+
+        dataXLim_GC_out, dataYLim_GC_out = plot_distribution(data, fun_name, label_name, n_bins, run, 
+            fig_swept = fig_GC, run_label = legend_label, color = colors[run], 
+            dataXLim = dataXLim_d, dataYLim = dataYLim_d)
+
         if not auto_limits:
             fig_infections.savefig('data/PDF_%s_r%i.pdf' %('infections',run), 
                                     format='pdf', dpi=100,bbox_inches='tight')
             fig_fatalities.savefig('data/PDF_%s_r%i.pdf' %('fatalities',run), 
                                 format='pdf', dpi=100,bbox_inches='tight')
             fig_dist.savefig('data/PDF_%s_r%i.pdf' %('distance',run), 
+                            format='pdf', dpi=100,bbox_inches='tight')
+            fig_GC.savefig('data/PDF_%s_r%i.pdf' %('ground_covered',run), 
                             format='pdf', dpi=100,bbox_inches='tight')
 
         run += 1
@@ -469,6 +492,8 @@ if __name__ == '__main__':
         pickle.dump(dataYLim_f_out,fid)
         pickle.dump(dataXLim_d_out,fid)
         pickle.dump(dataYLim_d_out,fid)
+        pickle.dump(dataXLim_GC_out,fid)
+        pickle.dump(dataYLim_GC_out,fid)
 
     if same_axis:
         fig_infections.savefig('data/PDF_%s.pdf' %('infections'), 
@@ -477,4 +502,6 @@ if __name__ == '__main__':
                             format='pdf', dpi=100,bbox_inches='tight')
         fig_dist.savefig('data/PDF_%s.pdf' %('distance'), 
                         format='pdf', dpi=100,bbox_inches='tight')
+        fig_GC.savefig('data/PDF_%s.pdf' %('ground_covered'), 
+                       format='pdf', dpi=100,bbox_inches='tight')
         plt.show()

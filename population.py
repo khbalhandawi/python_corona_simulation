@@ -278,15 +278,16 @@ class Population_trackers():
         self.recovered.append(len(population[population[:,6] == 2]))
         self.fatalities.append(len(population[population[:,6] == 3]))
         
+        # Total distance travelled
+        if self.Config.track_position:
+            speed_vector = population[:,3:5][population[:,11] == 0] # speed of individuals within world
+            distance_individuals = np.linalg.norm( speed_vector ,axis = 1) * self.Config.dt # current distance travelled 
+
+            self.total_distance[population[:,11] == 0] += distance_individuals # cumilative distance travelled
+            self.distance_travelled.append(np.mean(self.total_distance)) # mean cumilative distance
+
         # Compute and track ground covered
-        if self.Config.track_position and (frame % self.Config.update_every_n_frame) == 0:
-
-            # Total distance travelled
-            # speed_vector = population[:,3:5][population[:,11] == 0] # speed of individuals within world
-            # distance_individuals = np.linalg.norm( speed_vector ,axis = 1) * self.Config.dt # current distance travelled 
-
-            # self.total_distance[population[:,11] == 0] += distance_individuals # cumilative distance travelled
-            # self.distance_travelled.append(np.mean(self.total_distance)) # mean cumilative distance
+        if self.Config.track_GC and (frame % self.Config.update_every_n_frame) == 0:
 
             # Track ground covered
             n_inside_world = len([population[:,11] == 0])

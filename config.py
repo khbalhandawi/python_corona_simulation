@@ -32,6 +32,7 @@ class Configuration():
         self.ybounds = [0.02, 0.98]
         self.n_gridpoints = 10 # resolution of 2D grid for tracking population position
         self.track_position = True
+        self.track_GC = False
         self.update_every_n_frame = 1
 
         #visualisation variables
@@ -78,8 +79,10 @@ class Configuration():
         self.wander_step_size = 0.01
         self.gravity_strength = 1
         self.wander_step_duration = 0.02
-
-        self.social_distance_threshold_on = 0.0 # number of infected
+        
+        self.thresh_type = 'infected'
+        self.testing_threshold_on = 0.0 # number of infected
+        self.social_distance_threshold_on = 0.0 # number of hospitalized
         self.social_distance_threshold_off = 0.0 # number of remaining infected people
         self.social_distance_violation = 0.0 # number of people
 

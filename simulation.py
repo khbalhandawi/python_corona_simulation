@@ -42,6 +42,7 @@ class Simulation():
         self.last_step_change = 0
         self.above_act_thresh = False
         self.above_deact_thresh = False
+        self.above_test_thresh = False
         #initialize default population
         self.population_init()
         #initalise destinations vector
@@ -81,7 +82,10 @@ class Simulation():
         #activate social distancing above a certain infection threshold
         if not self.above_act_thresh and self.Config.social_distance_threshold_on > 0:
             # If not previously above infection threshold activate when threshold reached
-            self.above_act_thresh = sum(self.population[:,6] == 1) >= self.Config.social_distance_threshold_on
+            if self.Config.thresh_type == 'hospitalized':
+                self.above_act_thresh = sum(self.population[:,11] == 1) >= self.Config.social_distance_threshold_on
+            elif self.Config.thresh_type == 'infected':
+                self.above_act_thresh = sum(self.population[:,6] == 1) >= self.Config.social_distance_threshold_on
         elif self.Config.social_distance_threshold_on == 0:
             self.above_act_thresh = True
 
@@ -125,12 +129,23 @@ class Simulation():
 
         #======================================================================================#
         #find new infections
+
+        if not self.above_test_thresh and self.Config.testing_threshold_on > 0:
+            # If not previously above infection threshold activate when threshold reached
+            self.above_test_thresh = sum(self.population[:,6] == 1) >= self.Config.testing_threshold_on
+            # self.above_test_thresh = sum(self.population[:,6] == 1) >= self.Config.social_distance_threshold_on
+        elif self.Config.testing_threshold_on == 0:
+            self.above_test_thresh = True
+
+        act_testing = self.above_test_thresh and sum(self.population[:,6] == 1) > 0
+
         self.population, self.destinations = infect(self.population, self.Config, self.frame, 
                                                     send_to_location = self.Config.self_isolate, 
                                                     location_bounds = self.Config.isolation_bounds,  
                                                     destinations = self.destinations, 
                                                     location_no = 1, 
-                                                    location_odds = self.Config.self_isolate_proportion)
+                                                    location_odds = self.Config.self_isolate_proportion,
+                                                    test_flag = act_testing)
 
         #recover and die
         self.population = recover_or_die(self.population, self.frame, self.Config)
@@ -241,6 +256,7 @@ if __name__ == '__main__':
     sim.Config.pop_size = 1000
     sim.Config.n_gridpoints = 33
     sim.Config.track_position = True
+    sim.Config.track_GC = True
     sim.Config.update_every_n_frame = 5
     sim.Config.endif_no_infections = False
 
@@ -317,9 +333,11 @@ if __name__ == '__main__':
 
     # run 8 (self-isolation scenario with social distancing after threshold)
     sim.Config.social_distance_factor = 0.0001 * 0.1 * force_scaling
-    sim.Config.social_distance_threshold_on = 20 # number of people 
+    sim.Config.thresh_type = 'hospitalized'
+    sim.Config.social_distance_threshold_on = 15 # number of people 
+    sim.Config.testing_threshold_on = 15 # number of people 
 
-    sim.Config.healthcare_capacity = 50
+    sim.Config.healthcare_capacity = 150
     sim.Config.wander_factor_dest = 0.1
     sim.Config.set_self_isolation(number_of_tests = 50, self_isolate_proportion = 1.0,
                                   isolation_bounds = [-0.26, 0.02, 0.0, 0.28],

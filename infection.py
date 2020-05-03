@@ -61,7 +61,7 @@ def find_nearby(population, infection_zone, traveling_infects=False,
 
 def infect(population, Config, frame, send_to_location=False, 
            location_bounds=[], destinations=[], location_no=1, 
-           location_odds=1.0):
+           location_odds=1.0, test_flag=False):
     '''finds new infections.
     
     Function that finds new infections in an area around infected persens
@@ -165,22 +165,22 @@ def infect(population, Config, frame, send_to_location=False,
                         population[np.int32(person[0])][8] = frame
                         new_infections.append(np.int32(person[0]))
 
-    # randomly pick individuals for testing
-    test_indices = np.int32(random.sample(list(population[:,0][population[:,11] == 0]), 
-                    k=min(Config.number_of_tests, len(list(population[:,0][population[:,11] == 0])))))
-    population[test_indices,18] = 1 # flag these individuals for testing
-    cond = (population[:,18] == 1) & (population[:,6] == 1) & (frame - population[:,8] >= Config.incubation_period) # condition for isolation
-    
-    # People that need to be hospitalized (decide who gets care randomly)
-    population[test_indices,18] = 0 # reset testing flags
-    test_indices = np.int32(random.sample(list(population[:,0][cond]), 
-                    k=min(len(population[cond]), Config.healthcare_capacity - len(population[population[:,10] == 1]))))
-    population[test_indices,18] = 1 # flag these individuals for testing
-    cond = (population[:,18] == 1) # condition for isolation
+    if send_to_location and test_flag:
+        # randomly pick individuals for testing
+        test_indices = np.int32(random.sample(list(population[:,0][population[:,11] == 0]), 
+                        k=min(Config.number_of_tests, len(list(population[:,0][population[:,11] == 0])))))
+        population[test_indices,18] = 1 # flag these individuals for testing
+        cond = (population[:,18] == 1) & (population[:,6] == 1) & (frame - population[:,8] >= Config.incubation_period) # condition for isolation
+        
+        # People that need to be hospitalized (decide who gets care randomly)
+        population[test_indices,18] = 0 # reset testing flags
+        test_indices = np.int32(random.sample(list(population[:,0][cond]), 
+                        k=min(len(population[cond]), Config.healthcare_capacity - len(population[population[:,10] == 1]))))
+        population[test_indices,18] = 1 # flag these individuals for testing
+        cond = (population[:,18] == 1) # condition for isolation
 
-    if send_to_location:
-        population[:,10][cond] = 1 # hospitalize sick individuals
-
+        # hospitalize sick individuals
+        population[:,10][cond] = 1 
         population[cond],\
         destinations[cond] = go_to_location(population[cond],
                                             destinations[cond],
