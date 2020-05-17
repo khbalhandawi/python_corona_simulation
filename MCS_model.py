@@ -19,7 +19,7 @@ def parallel_sampling(sim_object,n_samples,log_file):
     inputs = range(n_samples) 
 
     resultsfile=open(log_file,'w')
-    resultsfile.write('index'+','+'SD_factor'+','+'threshold'+','+'violations'+','+'testing_capacity'+','
+    resultsfile.write('index'+','+'SD_factor'+','+'threshold'+','+'essential_workers'+','+'testing_capacity'+','
                     +'n_infected'+','+'n_fatalaties'+','+'mean_GC'+','+'mean_distance'+','+'n_steps'+'\n')
     resultsfile.close()
 
@@ -347,7 +347,7 @@ if __name__ == '__main__':
     min_bin_width_i = 15 # for discrete distributions
     min_bin_width_f = 5 # for discrete distributions
 
-    new_run = True
+    new_run = False
 
     n_violators_sweep = np.arange(16, 101, 21)
     SD_factors = np.linspace(0.05,0.3,5) * force_scaling
@@ -386,8 +386,8 @@ if __name__ == '__main__':
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color'] # ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', ...]
 
     # Resume MCS
-    # n_violators_sweep = n_violators_sweep[4:]
     # run = 4
+    # n_violators_sweep = n_violators_sweep[run:]
 
     for n_violators in n_violators_sweep:
     # for test_capacity in test_capacities:
