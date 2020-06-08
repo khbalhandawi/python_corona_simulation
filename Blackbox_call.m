@@ -3,7 +3,9 @@ function [f] = Blackbox_call(d,sur)
     if (nargin==1)
         sur=false;
     end
-    d = d';
+    
+    [folder, ~, ~] = fileparts(which(mfilename)); % get blackbox_call folder
+    
     %% Simulation Paramters
     % Model variables
     bounds = [16      , 101   ;... % number of essential workers
@@ -31,7 +33,7 @@ function [f] = Blackbox_call(d,sur)
     
     %% Delete output files
     output_filename = 'matlab_out_Blackbox.log';
-    out_full_filename = ['data/',output_filename];
+    out_full_filename = [folder,'/data/',output_filename];
     if exist(out_full_filename, 'file') == 2
       delete(out_full_filename)
     end
@@ -40,9 +42,7 @@ function [f] = Blackbox_call(d,sur)
     
     %% Run Blackbox
     index = index + 1;
-    command = ['python simulation.py -- ',variable_str, ' ', parameter_str];
-
-    fprintf([command,'\n'])
+    command = ['cd ', folder, ' & python simulation.py -- ',variable_str, ' ', parameter_str]
     cstr = d(1) + d(3) - 155;
     %%%%%%%%%%%%%%%%%%%%%
     if ~(sur)
@@ -82,7 +82,7 @@ function [f] = Blackbox_call(d,sur)
     elseif status == 1 | out_exist == 0 | cstr > 0 % REMOVE CSTR FOR BB OPT
         %% Error execution
         
-        fileID_err = fopen(['data/',err_filename],'at');
+        fileID_err = fopen([folder,'/data/',err_filename],'at');
         Net_results = sprintf('%f,' , d);
         Net_results = Net_results(1:end-1);% strip final comma
         fprintf(fileID_err, '%i,%s', [index,Net_results]);
