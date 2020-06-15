@@ -31,7 +31,7 @@ def parallel_sampling(sim_object,n_samples,log_file):
         infected = max(sim.pop_tracker.infectious)
         fatalities = sim.pop_tracker.fatalities[-1]
         mean_distance = (sim.pop_tracker.distance_travelled[-1] / sim.frame) * 100
-        mean_GC = (sim.pop_tracker.mean_perentage_covered[-1] / sim.frame) * 100
+        mean_GC = (sim.pop_tracker.mean_perentage_covered[-1] / sim.frame) * 100000
 
         resultsfile=open(log_file,'a+')
         resultsfile.write(str(i)+','+str(sim.Config.social_distance_factor / 0.0001)+','+str(sim.Config.social_distance_threshold_on)+','
@@ -69,7 +69,7 @@ def serial_sampling(sim_object,n_samples):
         infected = sim_object.pop_tracker.infectious
         fatalities = sim.pop_tracker.fatalities
         mean_distance = (sim.pop_tracker.distance_travelled[-1] / sim.frame) * 100
-        mean_GC = (sim.pop_tracker.mean_perentage_covered[-1] / sim.frame) * 100
+        mean_GC = (sim.pop_tracker.mean_perentage_covered[-1] / sim.frame) * 100000
         
         infected_i += [max(infected)]
         fatalities_i += [fatalities[-1]]

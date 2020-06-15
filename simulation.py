@@ -258,7 +258,7 @@ def processInput(i,sim,log_file):
         infected = max(sim.pop_tracker.infectious)
         fatalities = sim.pop_tracker.fatalities[-1]
         mean_distance = (sim.pop_tracker.distance_travelled[-1] / sim.frame) * 100
-        mean_GC = (sim.pop_tracker.mean_perentage_covered[-1] / sim.frame) * 100
+        mean_GC = (sim.pop_tracker.mean_perentage_covered[-1] / sim.frame) * 100000
 
         resultsfile=open(log_file,'a+')
         resultsfile.write(str(i)+','+str(sim.Config.social_distance_factor / 0.0001)+','+str(sim.Config.social_distance_threshold_on)+','
@@ -521,7 +521,7 @@ if __name__ == '__main__':
 
         [infected, fatalities, mean_GC, mean_distance] = processInput(run,sim,log_file)
         
-        obj_1 = -mean_GC*1000
+        obj_1 = -mean_GC
         obj_2 = fatalities
         c1 = infected - healthcare_capacity
 
