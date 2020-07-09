@@ -19,7 +19,7 @@ class Configuration():
         self.save_pop_freq = 10 #population data will be saved every 'n' timesteps. Default: 10
         self.save_pop_folder = 'pop_data/' #folder to write population timestep data to
         self.endif_no_infections = True #whether to stop simulation if no infections remain
-
+    
         #scenario flags
         self.traveling_infects = False
         self.self_isolate = False
@@ -85,6 +85,7 @@ class Configuration():
         self.social_distance_threshold_on = 0.0 # number of hospitalized
         self.social_distance_threshold_off = 0.0 # number of remaining infected people
         self.social_distance_violation = 0.0 # number of people
+        self.SD_act_onset = False
 
         #when people have an active destination, the wander range defines the area
         #surrounding the destination they will wander upon arriving
@@ -98,6 +99,7 @@ class Configuration():
         self.recovery_duration=(200, 500) #how many ticks it may take to recover from the illness
         self.mortality_chance=0.02 #global baseline chance of dying from the disease
         self.incubation_period=0 #number of frames the individual spreads disease unknowingly
+        self.patient_Z_loc = 'random'
 
         #healthcare variables
         self.healthcare_capacity = 300 #capacity of the healthcare system

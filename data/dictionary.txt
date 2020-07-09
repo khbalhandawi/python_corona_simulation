@@ -1,0 +1,8 @@
+Ro_1: pop_size = 1000; n_grid n_gridpoints= 10; update_every_n_frame = 5; endif_no_infections = True; simulation_steps = 20000
+Ro_2: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = True; simulation_steps = 20000
+R0: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = True; simulation_steps = 20000
+R1: pop_size = 3000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = True; simulation_steps = 20000 (McGill PC)
+R2: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = False; simulation_steps = 20000  (McGill PC)
+R3: pop_size = 100; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = False; simulation_steps = 5000  (Stryx laptop)
+R4: pop_size = 500; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = False; simulation_steps = 5000; SD_act_onset = True; patient_Z_loc = 'central' (Stryx laptop)
+R5: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = False; simulation_steps = 5000; SD_act_onset = True; patient_Z_loc = 'central' (McGill PC)

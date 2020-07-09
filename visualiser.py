@@ -24,6 +24,8 @@ def set_style(Config):
         mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}',
                                                r'\usepackage{amssymb}']
         mpl.rcParams['font.family'] = 'serif'
+    else:
+        mpl.rc('text', usetex = False)
 
 def build_fig(Config, figsize=(10,5)):
     set_style(Config)

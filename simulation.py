@@ -97,7 +97,12 @@ class Simulation():
             self.above_deact_thresh = sum(self.population[:,6][self.population[:,11] == 0] == 1) <= \
                                        self.Config.social_distance_threshold_off
 
-        act_social_distancing = self.above_act_thresh and not self.above_deact_thresh and sum(self.population[:,6] == 1) > 0
+        # activate social distancing at the onset of infection
+        if not self.Config.SD_act_onset:
+            act_social_distancing = self.above_act_thresh and not self.above_deact_thresh and sum(self.population[:,6] == 1) > 0
+        # activate social distancing from start of simulation
+        elif self.Config.SD_act_onset:
+            act_social_distancing = self.above_act_thresh and not self.above_deact_thresh
 
         #activate social distancing only for compliant individuals
         if self.Config.social_distance_factor > 0 and act_social_distancing:
@@ -197,10 +202,25 @@ class Simulation():
 
         if self.frame == 50:
             print('\ninfecting person (Patient Zero)')
-            self.population[0][6] = 1
-            self.population[0][8] = 50
-            self.population[0][10] = 1
 
+            if self.Config.patient_Z_loc == 'random':
+                self.population[0][6] = 1
+                self.population[0][8] = 50
+                self.population[0][10] = 1
+            elif self.Config.patient_Z_loc == 'central':
+                
+                center = np.zeros((self.Config.pop_size,2))
+
+                center[:,0] = (self.Config.xbounds[0] + self.Config.xbounds[1]) / 2
+                center[:,1] = (self.Config.ybounds[0] + self.Config.ybounds[1]) / 2
+
+                to_center = (center - self.population[:,1:3])
+                dist = np.linalg.norm(to_center,axis=1)
+
+                # infect nearest individual to center
+                self.population[np.argmin(dist)][6] = 1
+                self.population[np.argmin(dist)][8] = 50
+                self.population[np.argmin(dist)][10] = 1
 
     def run(self):
         '''run simulation'''
