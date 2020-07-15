@@ -196,7 +196,7 @@ class Simulation():
     def callback(self):
         '''placeholder function that can be overwritten.
 
-        By ovewriting this method any custom behaviour can be implemented.
+        By overwriting this method any custom behavior can be implemented.
         The method is called after every simulation timestep.
         '''
 
@@ -313,6 +313,8 @@ if __name__ == '__main__':
         sim.Config.track_GC = True
         sim.Config.update_every_n_frame = 5
         sim.Config.endif_no_infections = False
+        sim.Config.SD_act_onset = True
+        sim.Config.patient_Z_loc = 'central'
 
         area_scaling = 1 / sim.Config.pop_size / 600
         distance_scaling = 1 / np.sqrt(sim.Config.pop_size / 600)
@@ -465,13 +467,15 @@ if __name__ == '__main__':
         sim = Simulation()
 
         #set number of simulation steps
-        sim.Config.simulation_steps = 20000
+        sim.Config.simulation_steps = 2000
         sim.Config.pop_size = 1000
         sim.Config.n_gridpoints = 33
         sim.Config.track_position = True
         sim.Config.track_GC = True
         sim.Config.update_every_n_frame = 5
-        sim.Config.endif_no_infections = True
+        sim.Config.endif_no_infections = False
+        sim.Config.SD_act_onset = True
+        sim.Config.patient_Z_loc = 'central'
 
         area_scaling = 1 / sim.Config.pop_size / 600
         distance_scaling = 1 / np.sqrt(sim.Config.pop_size / 600)
@@ -517,7 +521,7 @@ if __name__ == '__main__':
         sim.Config.social_distance_factor = 0.0001 * SD * force_scaling
         sim.Config.thresh_type = 'hospitalized'
         sim.Config.social_distance_threshold_off = 0 # number of people
-        sim.Config.social_distance_threshold_on = 15 # number of people 
+        sim.Config.social_distance_threshold_on = 0 # number of people 
         sim.Config.testing_threshold_on = 15 # number of people 
         sim.Config.social_distance_violation = n_violators # number of people
 

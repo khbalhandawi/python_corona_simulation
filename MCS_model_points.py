@@ -10,6 +10,22 @@ import matplotlib as mpl
 from matplotlib import rcParams
 import pickle
 
+#==============================================================================#
+# SCALING BY A RANGE
+def scaling(x,l,u,operation):
+    # scaling() scales or unscales the vector x according to the bounds
+    # specified by u and l. The flag type indicates whether to scale (1) or
+    # unscale (2) x. Vectors must all have the same dimension.
+    
+    if operation == 1:
+        # scale
+        x_out=(x-l)/(u-l)
+    elif operation == 2:
+        # unscale
+        x_out = l + x*(u-l)
+    
+    return x_out
+
 def parallel_sampling(sim_object,n_samples,log_file):
     from joblib import Parallel, delayed
     import multiprocessing
@@ -299,6 +315,66 @@ def plot_distribution(data, fun_name, label_name, n_bins, run,
 
 if __name__ == '__main__':
 
+    #===================================================================#
+    # Model variables
+    bounds = np.array([[   16    , 101   ], # number of essential workers
+                       [   0.05  , 0.3   ], # Social distancing factor
+                       [   10    , 51    ]]) # Testing capacity
+
+    #===================================================================#
+    # Points to plot
+    # R5 opts
+    # opt_1 = np.array([0.50, 0.50, 0.50])
+    # opt_1_unscaled = scaling(opt_1, bounds[:3,0], bounds[:3,1], 2)
+
+    # opt_2 = np.array([0.84676, 0.0094455, 0.15378])
+    # opt_2_unscaled = scaling(opt_2, bounds[:3,0], bounds[:3,1], 2)
+
+    # opt_3 = np.array([1.000000000000000, 0.250000000000000, 0.250000000000000])
+    # opt_3_unscaled = scaling(opt_3, bounds[:3,0], bounds[:3,1], 2)
+
+    # opt_4 = np.array([0.340000000000000, 0.740000000000000, 0.730000000000000])
+    # opt_4_unscaled = scaling(opt_4, bounds[:3,0], bounds[:3,1], 2)
+
+    # print('point #1: E = %f, S = %f, T = %f' %(opt_1_unscaled[0],opt_1_unscaled[1],opt_1_unscaled[2]))
+    # print('point #2: E = %f, S = %f, T = %f' %(opt_2_unscaled[0],opt_2_unscaled[1],opt_2_unscaled[2]))
+    # print('point #3: E = %f, S = %f, T = %f' %(opt_3_unscaled[0],opt_3_unscaled[1],opt_3_unscaled[2]))
+    # print('point #4: E = %f, S = %f, T = %f' %(opt_4_unscaled[0],opt_4_unscaled[1],opt_4_unscaled[2]))
+    
+    # points = np.vstack((opt_1_unscaled,opt_2_unscaled,opt_3_unscaled,opt_4_unscaled))
+
+    # labels = ['Nominal values $\mathbf{x} = [0.5~0.5~0.5]^{\mathrm{T}}$',
+    #           '$\mathtt{StoMADS-PB}$ unconstrained problem: $\mathbf{x} = [0.85 ~ 0.0094 ~ 0.15]^{\mathrm{T}}$',
+    #           '$\mathtt{StoMADS-PB}$ constrained problem: $\mathbf{x} = [1.00 ~ 0.25 ~ 0.25]^{\mathrm{T}}$',
+    #           'Trail point: $\mathbf{x} = [0.34 ~ 0.74 ~ 0.73]^{\mathrm{T}}$']
+    
+    #===================================================================#
+    # Points to plot
+    # R6 opts
+    opt_1 = np.array([0.50, 0.50, 0.50])
+    opt_1_unscaled = scaling(opt_1, bounds[:3,0], bounds[:3,1], 2)
+
+    opt_2 = np.array([0.98884, 0.0089353, 0.95933])
+    opt_2_unscaled = scaling(opt_2, bounds[:3,0], bounds[:3,1], 2)
+
+    opt_3 = np.array([1.000000000000000, 0.250000000000000, 0.250000000000000])
+    opt_3_unscaled = scaling(opt_3, bounds[:3,0], bounds[:3,1], 2)
+
+    opt_4 = np.array([0.340000000000000, 0.740000000000000, 0.730000000000000])
+    opt_4_unscaled = scaling(opt_4, bounds[:3,0], bounds[:3,1], 2)
+
+    print('point #1: E = %f, S = %f, T = %f' %(opt_1_unscaled[0],opt_1_unscaled[1],opt_1_unscaled[2]))
+    print('point #2: E = %f, S = %f, T = %f' %(opt_2_unscaled[0],opt_2_unscaled[1],opt_2_unscaled[2]))
+    print('point #3: E = %f, S = %f, T = %f' %(opt_3_unscaled[0],opt_3_unscaled[1],opt_3_unscaled[2]))
+    print('point #4: E = %f, S = %f, T = %f' %(opt_4_unscaled[0],opt_4_unscaled[1],opt_4_unscaled[2]))
+    
+    points = np.vstack((opt_1_unscaled,opt_2_unscaled,opt_3_unscaled,opt_4_unscaled))
+
+    labels = ['Nominal values $\mathbf{x} = [0.5~0.5~0.5]^{\mathrm{T}}$',
+              '$\mathtt{StoMADS-PB}$ constrained problem: $\mathbf{x} = [0.99 ~ 0.0078 ~ 0.96]^{\mathrm{T}}$',
+              '$\mathtt{StoMADS-PB}$ unconstrained problem: $\mathbf{x} = [1.00 ~ 0.25 ~ 0.25]^{\mathrm{T}}$',
+              'Trail point: $\mathbf{x} = [0.34 ~ 0.74 ~ 0.73]^{\mathrm{T}}$']
+
     #=====================================================================#
     #initialize
     sim = Simulation()
@@ -352,7 +428,7 @@ if __name__ == '__main__':
     sim.Config.gravity_strength = 0
     sim.Config.wander_step_duration = sim.Config.dt * 10
 
-    #=====================================================================#
+    #===================================================================#
     run = 0
 
     # n_samples = 1000
@@ -365,7 +441,7 @@ if __name__ == '__main__':
     min_bin_width_i = 15 # for discrete distributions
     min_bin_width_f = 5 # for discrete distributions
 
-    new_run = True
+    new_run = False
 
     n_violators_sweep = np.arange(16, 101, 21)
     SD_factors = np.linspace(0.05,0.3,5) * force_scaling
@@ -407,50 +483,48 @@ if __name__ == '__main__':
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color'] # ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', ...]
 
     # Resume MCS
-    # run = 1
-    # n_violators_sweep = n_violators_sweep[run:]
-    # run = 2
-    # SD_factors = SD_factors[run:]
+    # run = 3
+    # points = points[run:]
+    # labels = labels[run:]
 
-    for n_violators in n_violators_sweep:
-    # for test_capacity in test_capacities:
-    # for SD in SD_factors:
+    # terminate MCS
+    run = 0
+    run_end = 1 + 1
+    points = points[:run_end]
+    labels = labels[:run_end]
 
-        legend_label = 'Number of essential workers ($E$) = %i people' %(n_violators)
-        # legend_label = 'Testing capacity ($T$) = %i people' %(test_capacity)
-        # legend_label = 'Social distancing factor ($S$)= %f' %(SD)
+    for point,legend_label in zip(points,labels):
+
+        # Model variables
+        n_violators = int(point[0])
+        SD = point[1]
+        test_capacity = int(point[2])
+
+        # Model parameters
+        healthcare_capacity = 150
 
         if new_run:
-            #=====================================================================#
-            # Essential workers sweep
 
-            sim.Config.social_distance_factor = 0.0001 * 0.175 * force_scaling
-            sim.Config.social_distance_threshold_on = 0 # number of people
+            #=====================================================================#
+            # Design variables
+            sim.Config.social_distance_factor = 0.0001 * SD * force_scaling
+            sim.Config.thresh_type = 'hospitalized'
             sim.Config.social_distance_threshold_off = 0 # number of people
+            sim.Config.social_distance_threshold_on = 0 # number of people 
+            sim.Config.testing_threshold_on = 15 # number of people 
             sim.Config.social_distance_violation = n_violators # number of people
+
+            sim.Config.healthcare_capacity = healthcare_capacity
+            sim.Config.wander_factor_dest = 0.1
+            sim.Config.set_self_isolation(number_of_tests = test_capacity, self_isolate_proportion = 1.0,
+                                          isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
+                                          traveling_infects=False)
+
             #=====================================================================#
-            # SD sweep
-
-            # sim.Config.social_distance_factor = 0.0001 * SD
-            #=====================================================================#
-            # Testing sweep
-
-            # sim.Config.social_distance_factor = 0.0001 * 0.175 * force_scaling
-            # sim.Config.thresh_type = 'hospitalized'
-            # sim.Config.social_distance_threshold_on = 0 # number of people 
-            # sim.Config.testing_threshold_on = 15 # number of people 
-
-            # sim.Config.healthcare_capacity = 150
-            # sim.Config.wander_factor_dest = 0.1
-            # sim.Config.set_self_isolation(number_of_tests = test_capacity, self_isolate_proportion = 1.0,
-            #                             isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
-            #                             traveling_infects=False)
-            #=====================================================================#
-
             check_folder('data/')
             log_file = 'data/MCS_data_r%i.log' %run
-            [infected_i,fatalities_i,GC_i,distance_i] = parallel_sampling(sim,n_samples,log_file)
-            # [infected_i,fatalities_i,GC_i,distance_i] = serial_sampling(sim,n_samples,log_file)
+            # [infected_i,fatalities_i,GC_i,distance_i] = parallel_sampling(sim,n_samples,log_file)
+            [infected_i,fatalities_i,GC_i,distance_i] = serial_sampling(sim,n_samples,log_file)
 
             with open('data/MCS_data_r%i.pkl' %run,'wb') as fid:
                 pickle.dump(infected_i,fid)
