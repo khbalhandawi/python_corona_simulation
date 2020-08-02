@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib import rcParams
 import pickle
+import matplotlib.patches as patches
 
 #==============================================================================#
 # SCALING BY A RANGE
@@ -212,7 +213,8 @@ def make_pdf(dist, params, size=10000):
 def plot_distribution(data, fun_name, label_name, n_bins, run, 
                       discrete = False, min_bin_width = 0, 
                       fig_swept = None, run_label = 'PDF', color = u'b',
-                      dataXLim = None, dataYLim = None, constraint = None):
+                      dataXLim = None, dataYLim = None, constraint = None,
+                      fit_distribution = True, handles = [], labels = []):
 
     if constraint is not None:
         data_cstr = [d - constraint for d in data]
@@ -272,23 +274,31 @@ def plot_distribution(data, fun_name, label_name, n_bins, run,
     else:
         data_bins = n_bins
 
-    best_fit_name, best_fit_params, best_10_fits = best_fit_distribution(data, data_bins, ax)
+    # Fit and plot distribution
+    if fit_distribution:
 
-    best_dist = getattr(st, best_fit_name)
-    print('Best fit: %s' %(best_fit_name.upper()) )
-    # Make PDF with best params 
-    pdf = make_pdf(best_dist, best_fit_params)
-    pdf.plot(lw=2, color = color, label=run_label, legend=True, ax=ax2)
+        best_fit_name, best_fit_params, best_10_fits = best_fit_distribution(data, data_bins, ax)
 
-    param_names = (best_dist.shapes + ', loc, scale').split(', ') if best_dist.shapes else ['loc', 'scale']
-    param_str = ', '.join(['{}={:0.2f}'.format(k,v) for k,v in zip(param_names, best_fit_params)])
-    dist_str = '{}({})'.format(best_fit_name, param_str)
+        best_dist = getattr(st, best_fit_name)
+        print('Best fit: %s' %(best_fit_name.upper()) )
+        # Make PDF with best params 
+        pdf = make_pdf(best_dist, best_fit_params)
+        pdf.plot(lw=2, color = color, label=run_label, legend=True, ax=ax2)
+
+        param_names = (best_dist.shapes + ', loc, scale').split(', ') if best_dist.shapes else ['loc', 'scale']
+        param_str = ', '.join(['{}={:0.2f}'.format(k,v) for k,v in zip(param_names, best_fit_params)])
+        dist_str = '{}({})'.format(best_fit_name, param_str)
+
+        handles = []; labels = []
+    else:
+        lgd = ax2.legend(handles, labels, fontsize = 9.0)
+
 
     if discrete:
         # discrete bin numbers
-        ax2.hist(data, bins, color = color, alpha=0.5, label = 'data', density=True)
+        ax2.hist(data, bins, color = color, alpha=0.5, density=True)
     else:
-        ax2.hist(data, bins = n_bins, color = color, alpha=0.5, label = 'data', density=True)
+        ax2.hist(data, bins = n_bins, color = color, alpha=0.5, density=True)
     
     # plot constraint limits
     if constraint is not None:
@@ -355,7 +365,8 @@ if __name__ == '__main__':
     #           '$\mathtt{StoMADS-PB}$ unconstrained problem: $\mathbf{x} = [%.2g ~ %.2g ~ %.2g]^{\mathrm{T}}$' %(opt_2_unscaled[0],opt_2_unscaled[1],opt_2_unscaled[2]),
     #           '$\mathtt{StoMADS-PB}$ constrained problem: $\mathbf{x} = [%.2g ~ %.2g ~ %.2g]^{\mathrm{T}}$' %(opt_3_unscaled[0],opt_3_unscaled[1],opt_3_unscaled[2]),
     #           'Trail point: $\mathbf{x} = [%.2g ~ %.2g ~ %.2g]^{\mathrm{T}}$' %(opt_4_unscaled[0],opt_4_unscaled[1],opt_4_unscaled[2]),
-    
+    # fit_cond = True # Do not fit data
+    # run = 0 # starting point
     #===================================================================#
     # R6 opts
 
@@ -388,7 +399,8 @@ if __name__ == '__main__':
     #           '$\mathtt{StoMADS-PB}$ constrained problem, sample rate ($p^k$) = 1: $\mathbf{x} = [%.3g ~ %.3g ~ %.3g]^{\mathrm{T}}$' %(opt_2_unscaled[0],opt_2_unscaled[1],opt_2_unscaled[2]),
     #           '$\mathtt{StoMADS-PB}$ constrained problem, sample rate ($p^k$) = 5: $\mathbf{x} = [%.3g ~ %.3g ~ %.3g]^{\mathrm{T}}$' %(opt_3_unscaled[0],opt_3_unscaled[1],opt_3_unscaled[2]),
     #           '$\mathtt{StoMADS-PB}$ unconstrained problem, sample rate ($p^k$) = 5: $\mathbf{x} = [%.3g ~ %.3g ~ %.3g]^{\mathrm{T}}$' %(opt_4_unscaled[0],opt_4_unscaled[1],opt_4_unscaled[2])]
-
+    # fit_cond = True # Do not fit data
+    # run = 0 # starting point
     #===================================================================#
     # R7 opts
     
@@ -416,7 +428,8 @@ if __name__ == '__main__':
     labels = ['Nominal values $\mathbf{x} = [%.3g ~ %.3g ~ %.3g]^{\mathrm{T}}$' %(opt_1_unscaled[0],opt_1_unscaled[1],opt_1_unscaled[2]),
               '$\mathtt{StoMADS-PB}$ constrained problem, sample rate ($p^k$) = 5: $\mathbf{x} = [%.3g ~ %.3g ~ %.3g]^{\mathrm{T}}$' %(opt_2_unscaled[0],opt_2_unscaled[1],opt_2_unscaled[2]),
               '$\mathtt{StoMADS-PB}$ unconstrained problem, sample rate ($p^k$) = 5: $\mathbf{x} = [%.3g ~ %.3g ~ %.3g]^{\mathrm{T}}$' %(opt_3_unscaled[0],opt_3_unscaled[1],opt_3_unscaled[2])]
-
+    fit_cond = True # Do not fit data
+    run = 0 # starting point
     # #=====================================================================#
     #initialize
     sim = Simulation()
@@ -496,7 +509,7 @@ if __name__ == '__main__':
     else:
         fig_infections = fig_fatalities = fig_dist = fig_GC = None
 
-    auto_limits = True
+    auto_limits = False
     if auto_limits:
         dataXLim_i = dataYLim_i = None
         dataXLim_f = dataYLim_f = None
@@ -522,21 +535,22 @@ if __name__ == '__main__':
     mpl.rcParams['font.family'] = 'serif'
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color'] # ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', ...]
 
-    # New MCS
-    run = 0
-    # Resume MCS
-    # run = 3
-    # points = points[run:]
-    # labels = labels[run:]
+    handles_lgd = []; labels_lgd = [] # initialize legend
 
-    # terminate MCS
-    # run = 3
-    # run_end = 3 + 1
-    # points = points[run:run_end]
-    # labels = labels[run:run_end]
+    if new_run:
+        # New MCS
+        run = 0
+        # Resume MCS
+        # run = 3
+        # points = points[run:]
+        # labels = labels[run:]
 
-    print(points)
-    print(labels)
+        # terminate MCS
+        # run = 3
+        # run_end = 3 + 1
+        # points = points[run:run_end]
+        # labels = labels[run:run_end]
+
     for point,legend_label in zip(points,labels):
 
         # Model variables
@@ -583,36 +597,48 @@ if __name__ == '__main__':
                 distance_i = pickle.load(fid)
                 distance_i = [i for i in distance_i if i <= 0.15] # eliminate outliers
 
+        # Legend entries
+        a = patches.Rectangle((20,20), 20, 20, linewidth=1, edgecolor=colors[run], facecolor=colors[run], fill='None' ,alpha=0.5)
+        
+        handles_lgd += [a]
+        labels_lgd += [legend_label]
+
+        # Infected plot
         label_name = u'Maximum number of infected ($I(\mathbf{x})$)'
         fun_name = 'infections'
         data = infected_i
 
         dataXLim_i_out, dataYLim_i_out, mean_i, std_i = plot_distribution(data, fun_name, label_name, n_bins, run, 
             discrete = True, min_bin_width = min_bin_width_i, fig_swept = fig_infections, 
-            run_label = legend_label, color = colors[run], dataXLim = dataXLim_i, dataYLim = dataYLim_i, constraint = healthcare_capacity)
+            run_label = legend_label, color = colors[run], dataXLim = dataXLim_i, dataYLim = dataYLim_i, constraint = healthcare_capacity,
+            fit_distribution = fit_cond, handles = handles_lgd, labels = labels_lgd)
 
         mean_i_runs += [mean_i]
         std_i_runs += [std_i]
 
+        # Fatalities plot
         label_name = u'Number of fatalities ($F(\mathbf{x})$)'
         fun_name = 'fatalities'
         data = fatalities_i
 
         dataXLim_f_out, dataYLim_f_out, mean_f, std_f = plot_distribution(data, fun_name, label_name, n_bins, run, 
             discrete = True, min_bin_width = min_bin_width_f, fig_swept = fig_fatalities, 
-            run_label = legend_label, color = colors[run], dataXLim = dataXLim_f, dataYLim = dataYLim_f)
+            run_label = legend_label, color = colors[run], dataXLim = dataXLim_f, dataYLim = dataYLim_f,
+            fit_distribution = fit_cond, handles = handles_lgd, labels = labels_lgd)
 
         mean_f_runs += [mean_f]
         std_f_runs += [std_f]
 
+        # Distance plot
         label_name = u'Average cumulative distance travelled ($D(\mathbf{x})$)'
         fun_name = 'distance'
         data = distance_i
 
         dataXLim_d_out, dataYLim_d_out, mean_d, std_d = plot_distribution(data, fun_name, label_name, n_bins, run, 
             fig_swept = fig_dist, run_label = legend_label, color = colors[run], 
-            dataXLim = dataXLim_d, dataYLim = dataYLim_d)
-        
+            dataXLim = dataXLim_d, dataYLim = dataYLim_d,
+            fit_distribution = fit_cond, handles = handles_lgd, labels = labels_lgd)
+
         mean_d_runs += [mean_d]
         std_d_runs += [std_d]
 
@@ -620,9 +646,11 @@ if __name__ == '__main__':
         fun_name = 'ground covered'
         data = GC_i
 
+        # Ground covered plot
         dataXLim_GC_out, dataYLim_GC_out, mean_gc, std_gc = plot_distribution(data, fun_name, label_name, n_bins, run, 
             fig_swept = fig_GC, run_label = legend_label, color = colors[run], 
-            dataXLim = dataXLim_GC, dataYLim = dataYLim_GC)
+            dataXLim = dataXLim_GC, dataYLim = dataYLim_GC,
+            fit_distribution = fit_cond, handles = handles_lgd, labels = labels_lgd)
 
         mean_gc_runs += [mean_gc]
         std_gc_runs += [std_gc]
