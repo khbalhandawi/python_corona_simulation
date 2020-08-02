@@ -212,10 +212,15 @@ def make_pdf(dist, params, size=10000):
 def plot_distribution(data, fun_name, label_name, n_bins, run, 
                       discrete = False, min_bin_width = 0, 
                       fig_swept = None, run_label = 'PDF', color = u'b',
-                      dataXLim = None, dataYLim = None):
+                      dataXLim = None, dataYLim = None, constraint = None):
 
-    mean_data = np.mean(data)
-    std_data = np.std(data)
+    if constraint is not None:
+        data_cstr = [d - constraint for d in data]
+        mean_data = np.mean(data_cstr)
+        std_data = np.std(data_cstr)
+    else:
+        mean_data = np.mean(data)
+        std_data = np.std(data)
 
     # Plot raw data
     fig0 = plt.figure(figsize=(6,5))
@@ -285,6 +290,9 @@ def plot_distribution(data, fun_name, label_name, n_bins, run,
     else:
         ax2.hist(data, bins = n_bins, color = color, alpha=0.5, label = 'data', density=True)
     
+    # plot constraint limits
+    if constraint is not None:
+        ax2.axvline(x=constraint, linestyle='--', linewidth='2', color='k')
     # Save plot limits
     if dataYLim is None and dataXLim is None:
         dataYLim = ax2.get_ylim()
@@ -316,14 +324,14 @@ def plot_distribution(data, fun_name, label_name, n_bins, run,
 if __name__ == '__main__':
 
     #===================================================================#
-    # Model variables
-    bounds = np.array([[   16    , 101   ], # number of essential workers
-                       [   0.05  , 0.3   ], # Social distancing factor
-                       [   10    , 51    ]]) # Testing capacity
-
-    #===================================================================#
-    # Points to plot
     # R5 opts
+    #
+    # # Model variables
+    # bounds = np.array([[   16    , 101   ], # number of essential workers
+    #                    [   0.05  , 0.3   ], # Social distancing factor
+    #                    [   10    , 51    ]]) # Testing capacity
+    #
+    # # Points to plot
     # opt_1 = np.array([0.50, 0.50, 0.50])
     # opt_1_unscaled = scaling(opt_1, bounds[:3,0], bounds[:3,1], 2)
 
@@ -343,39 +351,73 @@ if __name__ == '__main__':
     
     # points = np.vstack((opt_1_unscaled,opt_2_unscaled,opt_3_unscaled,opt_4_unscaled))
 
-    # labels = ['Nominal values $\mathbf{x} = [0.5~0.5~0.5]^{\mathrm{T}}$',
-    #           '$\mathtt{StoMADS-PB}$ unconstrained problem: $\mathbf{x} = [0.85 ~ 0.0094 ~ 0.15]^{\mathrm{T}}$',
-    #           '$\mathtt{StoMADS-PB}$ constrained problem: $\mathbf{x} = [1.00 ~ 0.25 ~ 0.25]^{\mathrm{T}}$',
-    #           'Trail point: $\mathbf{x} = [0.34 ~ 0.74 ~ 0.73]^{\mathrm{T}}$']
+    # labels = ['Nominal values $\mathbf{x} = [%.2g ~ %.2g ~ %.2g]^{\mathrm{T}}$' %(opt_1_unscaled[0],opt_1_unscaled[1],opt_1_unscaled[2]),
+    #           '$\mathtt{StoMADS-PB}$ unconstrained problem: $\mathbf{x} = [%.2g ~ %.2g ~ %.2g]^{\mathrm{T}}$' %(opt_2_unscaled[0],opt_2_unscaled[1],opt_2_unscaled[2]),
+    #           '$\mathtt{StoMADS-PB}$ constrained problem: $\mathbf{x} = [%.2g ~ %.2g ~ %.2g]^{\mathrm{T}}$' %(opt_3_unscaled[0],opt_3_unscaled[1],opt_3_unscaled[2]),
+    #           'Trail point: $\mathbf{x} = [%.2g ~ %.2g ~ %.2g]^{\mathrm{T}}$' %(opt_4_unscaled[0],opt_4_unscaled[1],opt_4_unscaled[2]),
     
     #===================================================================#
-    # Points to plot
     # R6 opts
+
+    # # Model variables
+    # bounds = np.array([[   16    , 101   ], # number of essential workers
+    #                    [   0.05  , 0.3   ], # Social distancing factor
+    #                    [   10    , 51    ]]) # Testing capacity
+
+    # # Points to plot
+    # opt_1 = np.array([0.50, 0.50, 0.50])
+    # opt_1_unscaled = scaling(opt_1, bounds[:3,0], bounds[:3,1], 2)
+
+    # opt_2 = np.array([0.98884, 0.0089353, 0.95933])
+    # opt_2_unscaled = scaling(opt_2, bounds[:3,0], bounds[:3,1], 2)
+
+    # opt_3 = np.array([ 0.98388735454864395535, 0.00016188624431734411, 0.95337104798333527356])
+    # opt_3_unscaled = scaling(opt_3, bounds[:3,0], bounds[:3,1], 2)
+
+    # opt_4 = np.array([0.8125, 0.019531, 0.21875])
+    # opt_4_unscaled = scaling(opt_4, bounds[:3,0], bounds[:3,1], 2)
+
+    # print('point #1: E = %f, S = %f, T = %f' %(opt_1_unscaled[0],opt_1_unscaled[1],opt_1_unscaled[2]))
+    # print('point #2: E = %f, S = %f, T = %f' %(opt_2_unscaled[0],opt_2_unscaled[1],opt_2_unscaled[2]))
+    # print('point #3: E = %f, S = %f, T = %f' %(opt_3_unscaled[0],opt_3_unscaled[1],opt_3_unscaled[2]))
+    # print('point #4: E = %f, S = %f, T = %f' %(opt_4_unscaled[0],opt_4_unscaled[1],opt_4_unscaled[2]))
+    
+    # points = np.vstack((opt_1_unscaled,opt_2_unscaled,opt_3_unscaled,opt_4_unscaled))
+
+    # labels = ['Nominal values $\mathbf{x} = [%.3g ~ %.3g ~ %.3g]^{\mathrm{T}}$' %(opt_1_unscaled[0],opt_1_unscaled[1],opt_1_unscaled[2]),
+    #           '$\mathtt{StoMADS-PB}$ constrained problem, sample rate ($p^k$) = 1: $\mathbf{x} = [%.3g ~ %.3g ~ %.3g]^{\mathrm{T}}$' %(opt_2_unscaled[0],opt_2_unscaled[1],opt_2_unscaled[2]),
+    #           '$\mathtt{StoMADS-PB}$ constrained problem, sample rate ($p^k$) = 5: $\mathbf{x} = [%.3g ~ %.3g ~ %.3g]^{\mathrm{T}}$' %(opt_3_unscaled[0],opt_3_unscaled[1],opt_3_unscaled[2]),
+    #           '$\mathtt{StoMADS-PB}$ unconstrained problem, sample rate ($p^k$) = 5: $\mathbf{x} = [%.3g ~ %.3g ~ %.3g]^{\mathrm{T}}$' %(opt_4_unscaled[0],opt_4_unscaled[1],opt_4_unscaled[2])]
+
+    #===================================================================#
+    # R7 opts
+    
+    # Model variables
+    bounds = np.array([[   16    , 101   ], # number of essential workers
+                       [   0.001 , 0.1   ], # Social distancing factor
+                       [   10    , 51    ]]) # Testing capacity
+
+    # Points to plot
     opt_1 = np.array([0.50, 0.50, 0.50])
     opt_1_unscaled = scaling(opt_1, bounds[:3,0], bounds[:3,1], 2)
 
-    opt_2 = np.array([0.98884, 0.0089353, 0.95933])
+    opt_2 = np.array([0.8125, 0.23047, 0.96875])
     opt_2_unscaled = scaling(opt_2, bounds[:3,0], bounds[:3,1], 2)
 
-    opt_3 = np.array([1.000000000000000, 0.250000000000000, 0.250000000000000])
+    opt_3 = np.array([0.87256, 0.00024412, 0.18245])
     opt_3_unscaled = scaling(opt_3, bounds[:3,0], bounds[:3,1], 2)
-
-    opt_4 = np.array([0.340000000000000, 0.740000000000000, 0.730000000000000])
-    opt_4_unscaled = scaling(opt_4, bounds[:3,0], bounds[:3,1], 2)
 
     print('point #1: E = %f, S = %f, T = %f' %(opt_1_unscaled[0],opt_1_unscaled[1],opt_1_unscaled[2]))
     print('point #2: E = %f, S = %f, T = %f' %(opt_2_unscaled[0],opt_2_unscaled[1],opt_2_unscaled[2]))
     print('point #3: E = %f, S = %f, T = %f' %(opt_3_unscaled[0],opt_3_unscaled[1],opt_3_unscaled[2]))
-    print('point #4: E = %f, S = %f, T = %f' %(opt_4_unscaled[0],opt_4_unscaled[1],opt_4_unscaled[2]))
     
-    points = np.vstack((opt_1_unscaled,opt_2_unscaled,opt_3_unscaled,opt_4_unscaled))
+    points = np.vstack((opt_1_unscaled,opt_2_unscaled,opt_3_unscaled))
 
-    labels = ['Nominal values $\mathbf{x} = [0.5~0.5~0.5]^{\mathrm{T}}$',
-              '$\mathtt{StoMADS-PB}$ constrained problem: $\mathbf{x} = [0.99 ~ 0.0078 ~ 0.96]^{\mathrm{T}}$',
-              '$\mathtt{StoMADS-PB}$ unconstrained problem: $\mathbf{x} = [1.00 ~ 0.25 ~ 0.25]^{\mathrm{T}}$',
-              'Trail point: $\mathbf{x} = [0.34 ~ 0.74 ~ 0.73]^{\mathrm{T}}$']
+    labels = ['Nominal values $\mathbf{x} = [%.3g ~ %.3g ~ %.3g]^{\mathrm{T}}$' %(opt_1_unscaled[0],opt_1_unscaled[1],opt_1_unscaled[2]),
+              '$\mathtt{StoMADS-PB}$ constrained problem, sample rate ($p^k$) = 5: $\mathbf{x} = [%.3g ~ %.3g ~ %.3g]^{\mathrm{T}}$' %(opt_2_unscaled[0],opt_2_unscaled[1],opt_2_unscaled[2]),
+              '$\mathtt{StoMADS-PB}$ unconstrained problem, sample rate ($p^k$) = 5: $\mathbf{x} = [%.3g ~ %.3g ~ %.3g]^{\mathrm{T}}$' %(opt_3_unscaled[0],opt_3_unscaled[1],opt_3_unscaled[2])]
 
-    #=====================================================================#
+    # #=====================================================================#
     #initialize
     sim = Simulation()
 
@@ -429,8 +471,6 @@ if __name__ == '__main__':
     sim.Config.wander_step_duration = sim.Config.dt * 10
 
     #===================================================================#
-    run = 0
-
     # n_samples = 1000
     # n_bins = 30 # for continuous distributions
     # min_bin_width_i = 15 # for discrete distributions
@@ -482,17 +522,21 @@ if __name__ == '__main__':
     mpl.rcParams['font.family'] = 'serif'
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color'] # ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', ...]
 
+    # New MCS
+    run = 0
     # Resume MCS
     # run = 3
     # points = points[run:]
     # labels = labels[run:]
 
     # terminate MCS
-    run = 0
-    run_end = 1 + 1
-    points = points[:run_end]
-    labels = labels[:run_end]
+    # run = 3
+    # run_end = 3 + 1
+    # points = points[run:run_end]
+    # labels = labels[run:run_end]
 
+    print(points)
+    print(labels)
     for point,legend_label in zip(points,labels):
 
         # Model variables
@@ -545,7 +589,7 @@ if __name__ == '__main__':
 
         dataXLim_i_out, dataYLim_i_out, mean_i, std_i = plot_distribution(data, fun_name, label_name, n_bins, run, 
             discrete = True, min_bin_width = min_bin_width_i, fig_swept = fig_infections, 
-            run_label = legend_label, color = colors[run], dataXLim = dataXLim_i, dataYLim = dataYLim_i)
+            run_label = legend_label, color = colors[run], dataXLim = dataXLim_i, dataYLim = dataYLim_i, constraint = healthcare_capacity)
 
         mean_i_runs += [mean_i]
         std_i_runs += [std_i]

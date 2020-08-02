@@ -4,8 +4,8 @@ R0: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no
 R1: pop_size = 3000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = True; simulation_steps = 20000 (McGill PC)
 R2: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = False; simulation_steps = 20000  (McGill PC)
 R3: pop_size = 100; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = False; simulation_steps = 5000  (Stryx laptop)
-R4: pop_size = 500; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = True; simulation_steps = 3500; SD_act_onset = True; patient_Z_loc = 'central' (Stryx laptop)
-R5: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = False; simulation_steps = 3500; SD_act_onset = True; patient_Z_loc = 'central' (McGill PC)
-R5_opts: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = True; simulation_steps = 3500; SD_act_onset = True; patient_Z_loc = 'central' (Stryx laptop)
-R6: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = False; simulation_steps = 2000; SD_act_onset = True; patient_Z_loc = 'central' (McGill PC)
-R6: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = False; simulation_steps = 2000; SD_act_onset = True; patient_Z_loc = 'central' (Stryx laptop)
+R4: pop_size = 500; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = True; simulation_steps = 3500; SD_act_onset = True; patient_Z_loc = 'central'; testing_threshold_on = 15 (Stryx laptop)
+R5: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = False; simulation_steps = 3500; SD_act_onset = True; patient_Z_loc = 'central'; testing_threshold_on = 15 (McGill PC, Stryx Laptop)
+R6: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = False; simulation_steps = 2000; SD_act_onset = True; patient_Z_loc = 'central'; testing_threshold_on = 15 (McGill PC)
+R6: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = False; simulation_steps = 2000; SD_act_onset = True; patient_Z_loc = 'central'; testing_threshold_on = 15 (Stryx laptop) - most stable
+R7: pop_size = 1000; n_grid n_gridpoints= 33; update_every_n_frame = 5; endif_no_infections = False; simulation_steps = 2000; SD_act_onset = True; patient_Z_loc = 'central'; testing_threshold_on = 0 (McGill PC) - rejected

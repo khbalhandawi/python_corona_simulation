@@ -304,7 +304,7 @@ if __name__ == '__main__':
     sim = Simulation()
 
     #set number of simulation steps
-    sim.Config.simulation_steps = 2000
+    sim.Config.simulation_steps = 3500
     sim.Config.pop_size = 1000
     sim.Config.n_gridpoints = 33
     sim.Config.track_position = True
@@ -365,7 +365,7 @@ if __name__ == '__main__':
     min_bin_width_i = 15 # for discrete distributions
     min_bin_width_f = 5 # for discrete distributions
 
-    new_run = True
+    new_run = False
 
     n_violators_sweep = np.arange(16, 101, 21)
     SD_factors = np.linspace(0.05,0.3,5) * force_scaling
@@ -407,7 +407,7 @@ if __name__ == '__main__':
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color'] # ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', ...]
 
     # Resume MCS
-    # run = 1
+    # run = 3
     # n_violators_sweep = n_violators_sweep[run:]
     # run = 2
     # SD_factors = SD_factors[run:]
