@@ -283,8 +283,8 @@ class Population_trackers():
             speed_vector = population[:,3:5][population[:,11] == 0] # speed of individuals within world
             distance_individuals = np.linalg.norm( speed_vector ,axis = 1) * self.Config.dt # current distance travelled 
 
-            self.total_distance[population[:,11] == 0] += distance_individuals # cumilative distance travelled
-            self.distance_travelled.append(np.mean(self.total_distance)) # mean cumilative distance
+            self.total_distance[population[:,11] == 0] += distance_individuals # cumulative distance travelled
+            self.distance_travelled.append(np.mean(self.total_distance)) # mean cumulative distance
 
         # Compute and track ground covered
         if self.Config.track_GC and (frame % self.Config.update_every_n_frame) == 0:
@@ -315,7 +315,7 @@ class Population_trackers():
             self.perentage_covered = np.sum(self.ground_covered,axis=1)/len(self.grid_coords[:,0])
             self.mean_perentage_covered.append(np.mean(self.perentage_covered)) # mean ground covered
             
-        # Mark recovered individuals as susceptable if reinfection enables
+        # Mark recovered individuals as susceptible if reinfection enables
         if self.reinfect:
             self.susceptible.append(pop_size - (self.infectious[-1] +
                                                 self.fatalities[-1]))

@@ -14,7 +14,8 @@ def gt(p):
     
     return p
 
-n_gridpoints = 33
+n_gridpoints = 3
+pop_size = 10
 
 xbounds = [0,1]
 ybounds = [0,1]
@@ -33,9 +34,13 @@ grid_coords_ylb = yy[:-1,:-1].reshape(((n_gridpoints-1)**2,1))
 grid_coords_xub = xx[1:,1:].reshape(((n_gridpoints-1)**2,1))
 grid_coords_yub = yy[1:,1:].reshape(((n_gridpoints-1)**2,1))
 
-grid_coords = np.column_stack((grid_coords_xlb,grid_coords_ylb,grid_coords_xub,grid_coords_yub))
+# Equivalent way
+grid_coords_xlb = np.tile(x[:-1],n_gridpoints-1).reshape(((n_gridpoints-1)**2,1))
+grid_coords_ylb = np.repeat(y[:-1],n_gridpoints-1).reshape(((n_gridpoints-1)**2,1))
+grid_coords_xub = np.tile(x[1:],n_gridpoints-1).reshape(((n_gridpoints-1)**2,1))
+grid_coords_yub = np.repeat(y[1:],n_gridpoints-1).reshape(((n_gridpoints-1)**2,1))
 
-pop_size = 2000
+grid_coords = np.column_stack((grid_coords_xlb,grid_coords_ylb,grid_coords_xub,grid_coords_yub))
 
 pos_vector = np.random.random((pop_size,2))
 ground_covered = np.zeros((pop_size, (n_gridpoints-1)**2))
@@ -59,10 +64,7 @@ u_y = (g4 - pos_vector_y).T
 
 cond = (l_x > 0) & (u_x > 0) & (l_y > 0) & (u_y > 0)
 gp[cond]
-
 ground_covered[cond] = 1
-print(ground_covered)
-
 
 x = np.arange(pop_size).reshape(pop_size,1)
 t = np.zeros(pop_size).reshape(pop_size,1)
@@ -78,7 +80,17 @@ p[cond]
 
 p[cond] = gt(p[cond])
 
+xbounds = [0.02, 0.98]
+buffer = 0.05
 
+r_xbounds = np.array([[xbounds[0] + buffer, xbounds[1] - buffer]] * pop_size)
+                   
+vect_un = np.random.uniform(low = -1,  high = 1, size = (pop_size,2))
+vect = vect_un / np.linalg.norm(vect_un,axis=1)[:,np.newaxis]
+
+print(np.linalg.norm(vect_un,axis=1))
+print(np.linalg.norm(vect_un,axis=1)[:,np.newaxis])
+    
 #4D
 # pos_vector_x = pos_vector[:,0]
 # g1 = np.tile(grid_coords[:,0],(pop_size,1)).T

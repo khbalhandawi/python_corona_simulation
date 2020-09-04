@@ -335,7 +335,7 @@ if __name__ == '__main__':
         sim.Config.visualise = True
         sim.Config.visualise_every_n_frame = 1
         sim.Config.plot_last_tstep = True
-        sim.Config.verbose = True
+        sim.Config.verbose = False
         sim.Config.save_plot = False
         sim.Config.save_data = False
         # sim.Config.marker_size = (2700 - sim.Config.pop_size) / 140
@@ -381,23 +381,23 @@ if __name__ == '__main__':
         # sim.Config.social_distance_threshold_off = 0 # number of people
 
         # run 7 (self-isolation scenario)
-        # sim.Config.healthcare_capacity = 50
-        # sim.Config.wander_factor_dest = 0.1
-        # sim.Config.set_self_isolation(number_of_tests = 100, self_isolate_proportion = 1.0,
-        #                               isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
-        #                               traveling_infects=False)
+        sim.Config.healthcare_capacity = 50
+        sim.Config.wander_factor_dest = 0.1
+        sim.Config.set_self_isolation(number_of_tests = 100, self_isolate_proportion = 1.0,
+                                      isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
+                                      traveling_infects=False)
 
         # run 8 (self-isolation scenario with social distancing after threshold)
-        sim.Config.social_distance_factor = 0.0001 * 0.1 * force_scaling
-        sim.Config.thresh_type = 'hospitalized'
-        sim.Config.social_distance_threshold_on = 15 # number of people 
-        sim.Config.testing_threshold_on = 15 # number of people 
+        # sim.Config.social_distance_factor = 0.0001 * 0.1 * force_scaling
+        # sim.Config.thresh_type = 'hospitalized'
+        # sim.Config.social_distance_threshold_on = 15 # number of people 
+        # sim.Config.testing_threshold_on = 15 # number of people 
 
-        sim.Config.healthcare_capacity = 150
-        sim.Config.wander_factor_dest = 0.1
-        sim.Config.set_self_isolation(number_of_tests = 50, self_isolate_proportion = 1.0,
-                                    isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
-                                    traveling_infects=False)
+        # sim.Config.healthcare_capacity = 150
+        # sim.Config.wander_factor_dest = 0.1
+        # sim.Config.set_self_isolation(number_of_tests = 50, self_isolate_proportion = 1.0,
+        #                             isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
+        #                             traveling_infects=False)
 
         # run 9 (self-isolation scenario with social distancing after threshold and violators)
         # sim.Config.social_distance_factor = 0.0001 * 0.2 * force_scaling

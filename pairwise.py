@@ -108,15 +108,28 @@ def test():
 
 def main():
     
+    import matplotlib.pyplot as plt
+    
     # x = np.arange(5)
     # y = np.arange(10,15)
     # X = np.hstack((x.reshape((5,1)),y.reshape((5,1))))
     
-    X = np.random.random((5,2))
+    # X = np.random.random((5,2))
     
-    X = np.random.uniform(low = -1, 
-                          high = 1,
-                          size = (5,2))
+    # X = np.random.uniform(low = -1, 
+    #                       high = 1,
+    #                       size = (2000,2))
+    
+    X = np.array([[0.0849588, 0.213444],
+        [0.437875, 0.59214],
+        [0.73224, 0.45096],
+        [0.674879, 0.786657],
+        [0.903503, 0.497677],
+        [0.470838, 0.872818],
+        [0.205956, 0.306843],
+        [0.219279, 0.726152],
+        [0.230023, 0.39993],
+        [0.601939, 0.134491]])
     
     dist = np.linalg.norm(X,axis=1)[:,np.newaxis]
     
@@ -124,31 +137,33 @@ def main():
     
     d = pairwise_comp(X[:,0])
     d_abs = cd.cdist(X,X)
-    print(d_abs)
+    # print(d_abs)
     d_abs = pairwise_dist(X)
-    print(d_abs)
+    # print(d_abs)
     
-    import timeit
-    print(timeit.timeit("test()", setup="from __main__ import test", number=100))
+    # import timeit
+    # print(timeit.timeit("test()", setup="from __main__ import test", number=100))
     
     F1 = force_calc(X)
     
     F2 = force_calc_fast(X)  
              
     print(F1 - F2)
-    # # d = pairwise_comp(x[:,0])
+    d = pairwise_comp(X[:,0])
+    print(d)
     
-    # # B = d < 0
-    # # B = B.astype(np.int)
     
-    # # input array
-    # x = np.array([[ 1., 2., 3.], [ 4., 5., 6.], [ 7., 8., 9.]])
+    # B = d < 0
+    # B = B.astype(np.int)
     
-    # # random boolean mask for which values will be changed
-    # mask = np.random.randint(0,2,size=x.shape).astype(np.bool)
+    # input array
+    x = np.array([[ 1., 2., 3.], [ 4., 5., 6.], [ 7., 8., 9.]])
     
-    # # use your mask to replace values in your input array
-    # x[mask] = 0
+    # random boolean mask for which values will be changed
+    mask = np.random.randint(0,2,size=x.shape).astype(np.bool)
+    
+    # use your mask to replace values in your input array
+    x[mask] = 0
     
 if __name__=="__main__":
     main()

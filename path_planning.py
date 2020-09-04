@@ -48,7 +48,6 @@ def go_to_location(patients, destinations, location_bounds, dest_no=1):
 
     return patients, destinations
 
-
 def set_destination(population, destinations, travel_speed = 2):
     '''sets destination of population
 
@@ -89,7 +88,6 @@ def set_destination(population, destinations, travel_speed = 2):
                                                           (population[:,12] == 0)] * travel_speed
 
     return population
-
 
 def check_at_destination(population, destinations, wander_factor=1):
     '''check who is at their destination already
@@ -178,7 +176,6 @@ def keep_at_destination(population, destination_bounds):
                    (population[:,11] == d)] = arrived
                                 
     return population
-
 
 def reset_destinations(population, ids=[]):
     '''clears destination markers
