@@ -154,8 +154,8 @@ def update_repulsive_forces(population, social_distance_factor):
     to_point_x = pairwise_comp(x)
     to_point_y = pairwise_comp(y)
 
-    repulsion_force_x = - social_distance_factor * np.sum( (to_point_x) / (dist**5) , axis = 1)
-    repulsion_force_y = - social_distance_factor * np.sum( (to_point_y) / (dist**5) , axis = 1)
+    repulsion_force_x = - social_distance_factor * np.sum( (to_point_x) / (dist**6) , axis = 1)
+    repulsion_force_y = - social_distance_factor * np.sum( (to_point_y) / (dist**6) , axis = 1)
 
     population[:,15] += repulsion_force_x
     population[:,16] += repulsion_force_y

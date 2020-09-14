@@ -52,6 +52,7 @@ class Configuration():
         #available: deuteranopia, protanopia, tritanopia. defauld=deuteranopia
         self.colorblind_type = 'deuteranopia'
         self.verbose = True #output stats to console
+        self.report_freq = 50; #report results every 50 frames
         self.report_status = False #output stats to console
         self.marker_size = 15 #markersize for plotting individuals
 

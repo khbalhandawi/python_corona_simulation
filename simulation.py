@@ -5,6 +5,7 @@ import numpy as np
 import scipy.io
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import time
 
 from utils import check_folder
 from config import Configuration, config_error
@@ -59,6 +60,7 @@ class Simulation():
         '''
         takes a time step in the simulation
         '''
+        start = time.time() # start clock
         #======================================================================================#
         #check destinations if active
         #define motion vectors if destinations active and not everybody is at destination
@@ -174,12 +176,17 @@ class Simulation():
                        self.fig, self.spec, self.ax1, self.ax2, self.tight_bbox)
 
         #report stuff to console
-        if self.Config.verbose:
+        if (self.Config.verbose) and ((self.frame % self.Config.report_freq) == 0):
+            end = time.time()
+            time_elapsed =  end - start # elapsed time
+
             sys.stdout.write('\r')
-            sys.stdout.write('%i: healthy: %i, infected: %i, immune: %i, in treatment: %i, \
-                            dead: %i, of total: %i, ground covered: %.5f' %(self.frame, self.pop_tracker.susceptible[-1], self.pop_tracker.infectious[-1],
+            sys.stdout.write('%i: S: %i, I: %i, R: %i, in treatment: %i, F: %i, of total: %i, D: %.5f, GC: %.5f, time: %.5f' 
+                            %(self.frame, self.pop_tracker.susceptible[-1], self.pop_tracker.infectious[-1],
                             self.pop_tracker.recovered[-1], len(self.population[self.population[:,10] == 1]),
-                            self.pop_tracker.fatalities[-1], self.Config.pop_size, self.pop_tracker.mean_perentage_covered[-1]))
+                            self.pop_tracker.fatalities[-1], self.Config.pop_size, 
+                            self.pop_tracker.distance_travelled[-1], self.pop_tracker.mean_perentage_covered[-1],
+                            time_elapsed))
 
         #save popdata if required
         if self.Config.save_pop and (self.frame % self.Config.save_pop_freq) == 0:
@@ -237,7 +244,7 @@ class Simulation():
                 print('\nCTRL-C caught, exiting')
                 sys.exit(1)
 
-            #check whether to end if no infecious persons remain.
+            #check whether to end if no infectious persons remain.
             #check if self.frame is above some threshold to prevent early breaking when simulation
             #starts initially with no infections.
             if self.Config.endif_no_infections and self.frame >= 300:
@@ -278,10 +285,10 @@ def processInput(i,sim,log_file):
         infected = max(sim.pop_tracker.infectious)
         fatalities = sim.pop_tracker.fatalities[-1]
         mean_distance = (sim.pop_tracker.distance_travelled[-1] / sim.frame) * 100
-        mean_GC = (sim.pop_tracker.mean_perentage_covered[-1] / sim.frame) * 100000
+        mean_GC = (sim.pop_tracker.mean_perentage_covered[-1] / sim.frame) * 100 * 2000
 
         resultsfile=open(log_file,'a+')
-        resultsfile.write(str(i)+','+str(sim.Config.social_distance_factor / 0.0001)+','+str(sim.Config.social_distance_threshold_on)+','
+        resultsfile.write(str(i)+','+str(sim.Config.social_distance_factor / 1e-6 )+','+str(sim.Config.social_distance_threshold_on)+','
                         +str(sim.Config.social_distance_violation)+','+str(sim.Config.number_of_tests)+','
                         +str(infected)+','+str(fatalities)+','+str(mean_GC)+','+str(mean_distance)+','+str(sim.frame)+'\n')
         resultsfile.close()
@@ -306,9 +313,9 @@ if __name__ == '__main__':
         sim = Simulation()
 
         #set number of simulation steps
-        sim.Config.simulation_steps = 3500
+        sim.Config.simulation_steps = 2000
         sim.Config.pop_size = 1000
-        sim.Config.n_gridpoints = 33
+        sim.Config.n_gridpoints = 25
         sim.Config.track_position = True
         sim.Config.track_GC = True
         sim.Config.update_every_n_frame = 5
@@ -316,10 +323,10 @@ if __name__ == '__main__':
         sim.Config.SD_act_onset = True
         sim.Config.patient_Z_loc = 'central'
 
-        area_scaling = 1 / sim.Config.pop_size / 600
-        distance_scaling = 1 / np.sqrt(sim.Config.pop_size / 600)
-        force_scaling = distance_scaling ** 4
-        count_scaling = sim.Config.pop_size / 600
+        area_scaling = 1 / sim.Config.pop_size / 600.0
+        distance_scaling = 1 / np.sqrt(sim.Config.pop_size / 600.0)
+        force_scaling = distance_scaling ** 2
+        count_scaling = sim.Config.pop_size / 600.0
 
         #set visuals
         # sim.Config.plot_style = 'default' #can also be dark
@@ -335,7 +342,8 @@ if __name__ == '__main__':
         sim.Config.visualise = True
         sim.Config.visualise_every_n_frame = 1
         sim.Config.plot_last_tstep = True
-        sim.Config.verbose = False
+        sim.Config.verbose = True
+        sim.Config.report_freq = 50
         sim.Config.save_plot = False
         sim.Config.save_data = False
         # sim.Config.marker_size = (2700 - sim.Config.pop_size) / 140
@@ -360,47 +368,47 @@ if __name__ == '__main__':
         # sim.Config.social_distance_factor = 0.0 * force_scaling
 
         # run 1 (social distancing)
-        # sim.Config.social_distance_factor = 0.0001 * 0.2 * force_scaling
+        # sim.Config.social_distance_factor = 1e-6  * 0.2 * force_scaling
 
         # run 2 (social distancing)
-        # sim.Config.social_distance_factor = 0.0001 * 0.22 * force_scaling
+        # sim.Config.social_distance_factor = 1e-6  * 0.22 * force_scaling
 
         # run 3 (social distancing)
-        # sim.Config.social_distance_factor = 0.0001 * 0.25 * force_scaling
+        # sim.Config.social_distance_factor = 1e-6  * 0.25 * force_scaling
 
         # run 4 (social distancing)
-        # sim.Config.social_distance_factor = 0.0001 * 0.3 * force_scaling
+        # sim.Config.social_distance_factor = 1e-6  * 0.3 * force_scaling
 
         # run 5 (social distancing with violators)
-        # sim.Config.social_distance_factor = 0.0001 * 0.3 * force_scaling
+        # sim.Config.social_distance_factor = 1e-6  * 0.3 * force_scaling
         # sim.Config.social_distance_violation = 20 # number of people
 
         # run 6 (social distancing with second wave)
-        # sim.Config.social_distance_factor = 0.0001 * 0.3 * force_scaling
+        # sim.Config.social_distance_factor = 1e-6  * 0.3 * force_scaling
         # sim.Config.social_distance_threshold_on = 20 # number of people
         # sim.Config.social_distance_threshold_off = 0 # number of people
 
         # run 7 (self-isolation scenario)
-        sim.Config.healthcare_capacity = 50
+        # sim.Config.healthcare_capacity = 50
+        # sim.Config.wander_factor_dest = 0.1
+        # sim.Config.set_self_isolation(number_of_tests = 100, self_isolate_proportion = 1.0,
+        #                               isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
+        #                               traveling_infects=False)
+
+        # run 8 (self-isolation scenario with social distancing after threshold)
+        sim.Config.social_distance_factor = 1e-6  * 0.01 * force_scaling
+        sim.Config.thresh_type = 'hospitalized'
+        sim.Config.social_distance_threshold_on = 0 # number of people 
+        sim.Config.testing_threshold_on = 0 # number of people 
+
+        sim.Config.healthcare_capacity = 150
         sim.Config.wander_factor_dest = 0.1
-        sim.Config.set_self_isolation(number_of_tests = 100, self_isolate_proportion = 1.0,
+        sim.Config.set_self_isolation(number_of_tests = 50, self_isolate_proportion = 1.0,
                                       isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
                                       traveling_infects=False)
 
-        # run 8 (self-isolation scenario with social distancing after threshold)
-        # sim.Config.social_distance_factor = 0.0001 * 0.1 * force_scaling
-        # sim.Config.thresh_type = 'hospitalized'
-        # sim.Config.social_distance_threshold_on = 15 # number of people 
-        # sim.Config.testing_threshold_on = 15 # number of people 
-
-        # sim.Config.healthcare_capacity = 150
-        # sim.Config.wander_factor_dest = 0.1
-        # sim.Config.set_self_isolation(number_of_tests = 50, self_isolate_proportion = 1.0,
-        #                             isolation_bounds = [-0.26, 0.02, 0.0, 0.28],
-        #                             traveling_infects=False)
-
         # run 9 (self-isolation scenario with social distancing after threshold and violators)
-        # sim.Config.social_distance_factor = 0.0001 * 0.2 * force_scaling
+        # sim.Config.social_distance_factor = 1e-6  * 0.2 * force_scaling
         # sim.Config.social_distance_violation = 20 # number of people
         # sim.Config.social_distance_threshold_on = 20 # number of people
         
@@ -411,7 +419,7 @@ if __name__ == '__main__':
         #                               traveling_infects=False)
 
         # run 10 (self-isolation scenario with social distancing after threshold, violators and a 2nd wave)
-        # sim.Config.social_distance_factor = 0.0001 * 0.3 * force_scaling
+        # sim.Config.social_distance_factor = 1e-6  * 0.3 * force_scaling
         # sim.Config.social_distance_violation = 20 # number of people
         # sim.Config.social_distance_threshold_on = 20 # number of people
         # sim.Config.social_distance_threshold_off = 2 # number of people
@@ -479,7 +487,7 @@ if __name__ == '__main__':
 
         area_scaling = 1 / sim.Config.pop_size / 600
         distance_scaling = 1 / np.sqrt(sim.Config.pop_size / 600)
-        force_scaling = distance_scaling ** 4
+        force_scaling = distance_scaling ** 2
         count_scaling = sim.Config.pop_size / 600
 
         #set visuals
@@ -496,7 +504,7 @@ if __name__ == '__main__':
         sim.Config.visualise = False
         sim.Config.visualise_every_n_frame = 1
         sim.Config.plot_last_tstep = False
-        sim.Config.verbose = False
+        sim.Config.verbose = True
         sim.Config.save_plot = False
         sim.Config.save_data = False
 
@@ -518,7 +526,7 @@ if __name__ == '__main__':
         #=====================================================================#
         # Design variables
 
-        sim.Config.social_distance_factor = 0.0001 * SD * force_scaling
+        sim.Config.social_distance_factor = 1e-6  * SD * force_scaling
         sim.Config.thresh_type = 'hospitalized'
         sim.Config.social_distance_threshold_off = 0 # number of people
         sim.Config.social_distance_threshold_on = 0 # number of people 
